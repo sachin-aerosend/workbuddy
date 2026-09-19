@@ -22,6 +22,7 @@ and swats away Reels and Shorts tabs before you get sucked in.
 | `app/` | Electron desktop app (main process, cat "brain", renderer, local bridge) |
 | `extension/` | Chrome / Edge / Brave extension (MV3) that watches tabs and talks to the app on `127.0.0.1:47821` |
 | `website/` | Static landing page (deployed on Vercel) |
+| `android/` | WorkBuddy for Android (Kotlin): overlay cat, accessibility watcher for Reels/Shorts, reminders |
 | `tools/` | Sprite generator, icon builder, tests and dev helpers |
 
 ## Develop
