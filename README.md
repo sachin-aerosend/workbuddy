@@ -3,6 +3,8 @@
 A tiny pixel cat that lives on your Windows taskbar. It naps in the corners, types along with you,
 and swats away Reels and Shorts tabs before you get sucked in.
 
+**Website:** https://workbuddy-ashen.vercel.app · **Download:** [latest release](https://github.com/sachin-aerosend/workbuddy/releases/latest)
+
 ![WorkBuddy](website/assets/og.png)
 
 ## What it does
