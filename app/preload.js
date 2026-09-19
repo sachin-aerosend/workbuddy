@@ -9,4 +9,5 @@ contextBridge.exposeInMainWorld('buddy', {
   dragEnd: () => ipcRenderer.send('drag-end'),
   answer: id => ipcRenderer.send('answer', id),
   log: msg => ipcRenderer.send('log', msg),
+  beat: () => ipcRenderer.send('beat'),
 });

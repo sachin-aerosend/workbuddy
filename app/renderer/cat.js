@@ -30,7 +30,10 @@ const clockImg = img('clock');
 const fxImg = img('fx');
 const NO_FLIP = new Set(['typing', 'box', 'dracula']);
 
-let state = null, animStart = performance.now(), lastSeq = -1;
+let state = null, animStart = performance.now(), lastSeq = -1, lastBeat = 0;
+// Report drawing errors to the main log instead of failing silently.
+addEventListener('error', e => window.buddy.log(`error: ${e.message} @${(e.filename || '').split('/').pop()}:${e.lineno}`));
+addEventListener('unhandledrejection', e => window.buddy.log(`rejection: ${e.reason}`));
 let catRect = { x: 0, y: 0, w: 0, h: 0 }, px = 3;
 
 function resize() {
@@ -90,6 +93,7 @@ function draw(now) {
   catRect = { x: x / dpr, y: y / dpr, w: fw / dpr, h: fh / dpr };
   reportHitboxes(i, px / dpr);
   if (state.clock) drawClock(state.clock, now, cx, x, y, fw, fh, bottom, dpr);
+  if (now - lastBeat > 2000) { lastBeat = now; window.buddy.beat(); } // "still drawing fine" for the watchdog
 
   // effects
   const headY = y + 6 * px;

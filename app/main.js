@@ -15,6 +15,8 @@ const EXTENSION_DIR = app.isPackaged ? path.join(process.resourcesPath, 'extensi
 
 if (!app.requestSingleInstanceLock()) app.quit();
 app.setAppUserModelId('com.workbuddy.cat');
+// Keep crash dumps locally (never uploaded) so a crash can be diagnosed afterwards.
+require('electron').crashReporter.start({ uploadToServer: false });
 
 // Diagnostic log (%APPDATA%\WorkBuddy\workbuddy.log): event types and tab ids only, never URLs or keys.
 const LOG = path.join(app.getPath('userData'), 'workbuddy.log');
@@ -45,8 +47,37 @@ function createWindow() {
   win.setIgnoreMouseEvents(true, { forward: true });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.webContents.on('console-message', (e) => { if (e.level === 'error' || e.level === 'warning') log('renderer console:', e.level, String(e.message).slice(0, 300)); });
-  win.webContents.on('render-process-gone', (_e, d) => log('renderer gone:', d.reason));
+  // If the drawing process dies or hangs, reload it so the cat comes back instead of vanishing.
+  win.webContents.on('render-process-gone', (_e, d) => { log('renderer gone:', d.reason, `exit=${d.exitCode}`); reviveRenderer('gone'); });
+  win.webContents.on('unresponsive', () => { log('renderer unresponsive'); reviveRenderer('unresponsive'); });
+  win.webContents.on('did-finish-load', () => { lastBeat = Date.now(); lastState = ''; lastBounds = ''; });
   win.once('ready-to-show', () => win.showInactive());
+}
+
+let lastBeat = Date.now(), lastRevive = 0;
+function reviveRenderer(why) {
+  if (!win || win.isDestroyed() || Date.now() - lastRevive < 3000) return;
+  lastRevive = Date.now();
+  log('reviving renderer:', why);
+  lastState = ''; lastBounds = ''; hitboxes = { cat: null, bubble: null };
+  setTimeout(() => { if (!win.isDestroyed()) win.webContents.reload(); }, 300);
+}
+// Renderer heartbeat: if the page goes silent while the cat should be showing, reload it.
+function watchdog() {
+  if (win && win.isVisible() && Date.now() - lastBeat > 8000) reviveRenderer('no heartbeat');
+}
+
+// Bring the cat to the screen the mouse is on (used when relaunched and when an alarm rings).
+function summonCat(say) {
+  hidden = false; pausedUntil = 0;
+  const c = screen.getCursorScreenPoint();
+  const w = screen.getDisplayNearestPoint(c).workArea;
+  if (brain.displayAt(brain.x).workArea.x !== w.x || brain.x < w.x || brain.x > w.x + w.width) {
+    brain.x = Math.min(Math.max(c.x, w.x + 80), w.x + w.width - 80);
+    brain.y = w.y + w.height;
+  }
+  if (say) brain.say(say, 2.5);
+  refreshTray();
 }
 
 // Where the tab sits on screen, estimated from the browser window's bounds and tab index.
@@ -108,7 +139,7 @@ function addReminder(text, minutes) {
 function checkReminders() {
   for (const r of reminders.takeDue()) {
     log('reminder due', r.id);
-    if (Date.now() < pausedUntil) pausedUntil = 0; // bring the cat back for it
+    summonCat(); // come to whichever screen you're looking at
     brain.alarm(r);
     if (Notification.isSupported()) {
       const n = new Notification({ title: 'WorkBuddy ⏰', body: r.text, icon: ICON, silent: false });
@@ -216,7 +247,9 @@ function loop() {
   }
 
   const visible = catVisible();
-  if (visible !== win.isVisible()) visible ? win.showInactive() : win.hide();
+  if (visible !== win.isVisible()) {
+    if (visible) { lastBeat = Date.now(); win.showInactive(); } else win.hide();
+  }
   if (!visible) return;
 
   // Near the top of a screen there's no room for a bubble above the cat: put the cat at the top of
@@ -327,6 +360,12 @@ app.whenReady().then(() => {
   ipcMain.on('hitboxes', (_e, h) => { hitboxes = h; });
   ipcMain.on('pet', () => { log('pet'); brain.pet(); });
   ipcMain.on('menu', () => openCatMenu());
+  ipcMain.on('beat', () => { lastBeat = Date.now(); });
+  // Opening WorkBuddy while it's already running brings the cat back to you.
+  app.on('second-instance', () => { log('second launch: summoning cat'); summonCat('here I am! 🐾'); });
+  setInterval(watchdog, 2000);
+  // Dev: WB_CRASHTEST=1 crashes the renderer after 6 s to prove it recovers.
+  if (process.env.WB_CRASHTEST) setTimeout(() => { log('crash test: killing renderer'); win.webContents.forcefullyCrashRenderer(); }, 6000);
   ipcMain.on('log', (_e, msg) => log('renderer:', String(msg).slice(0, 200)));
   ipcMain.on('drag-start', () => {
     const c = screen.getCursorScreenPoint();
