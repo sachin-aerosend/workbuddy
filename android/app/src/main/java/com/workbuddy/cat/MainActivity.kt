@@ -1,7 +1,6 @@
 package com.workbuddy.cat
 
 import android.Manifest
-import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -13,6 +12,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,16 +51,12 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         refresh++
         val p = Prefs.get(this)
-        if (Settings.canDrawOverlays(this)) { p.onboarded = true; CatService.start(this) }
+        if (canShowCat(this)) { p.onboarded = true; runCatching { CatService.start(this) } }
     }
 
     // ---------------- permissions ----------------
     private fun hasOverlay() = Settings.canDrawOverlays(this)
-    private fun hasWatcher(): Boolean {
-        val enabled = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: return false
-        val me = ComponentName(this, WatchService::class.java).flattenToString()
-        return enabled.split(':').any { it.equals(me, ignoreCase = true) }
-    }
+    private fun hasWatcher() = watcherEnabled(this)
     private fun hasNotifications() = Build.VERSION.SDK_INT < 33 ||
         ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     private fun batteryFree() = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
@@ -69,6 +66,7 @@ class MainActivity : ComponentActivity() {
     private fun askNotifications() { if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1) }
     private fun openBattery() = startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
     private fun openAppInfo() = startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+    private fun openUrl(u: String) = startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u)))
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults); refresh++
@@ -79,7 +77,7 @@ class MainActivity : ComponentActivity() {
     private fun Screen() {
         @Suppress("UNUSED_EXPRESSION") refresh   // recompose after returning from system settings
         val p = Prefs.get(this)
-        var v by androidx.compose.runtime.remember { mutableIntStateOf(0) }
+        var v by remember { mutableIntStateOf(0) }
         fun set(block: () -> Unit) { block(); v++ }
         @Suppress("UNUSED_EXPRESSION") v
 
@@ -88,7 +86,7 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                CatSprite(if (hasOverlay()) "happy" else "idle", 76.dp)
+                CatSprite(if (hasWatcher()) "happy" else "idle", 76.dp)
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text("WorkBuddy", style = H1)
@@ -97,16 +95,16 @@ class MainActivity : ComponentActivity() {
             }
 
             // ---- setup ----
-            val steps = listOf(hasOverlay(), hasWatcher(), hasNotifications())
-            if (steps.any { !it } || !batteryFree()) InkCard(fill = Ink.paper) {
+            if (!hasWatcher() || !hasNotifications() || !batteryFree()) InkCard(fill = Ink.paper) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text("Set up your cat", style = H2)
-                    Step("1", "Let the cat onto your screen", "Android calls this “Display over other apps”. It's how she can walk along the edge of your screen.", hasOverlay(), "Allow") { openOverlay() }
-                    Step("2", "Let the cat spot Reels & Shorts", "Turn on “WorkBuddy” in Accessibility. She only checks whether a short-video feed is on screen, how long you've been in an app, and *that* you're typing (never what). Nothing is stored or sent anywhere.", hasWatcher(), "Open settings") { openAccessibility() }
+                    Step("1", "Let the cat see your screen", "Turn on “WorkBuddy cat” in Accessibility. That's how she lives in the status bar, spots Reels & Shorts, runs Focus mode and types along. She only checks which app and screen is open and that you're typing, never what. Nothing is stored or sent anywhere.", hasWatcher(), "Open settings") { openAccessibility() }
                     if (!hasWatcher()) Text("Greyed out, or “Restricted setting”? Open App info → ⋮ (top right) → “Allow restricted settings”, then try again.", style = Small)
                     if (!hasWatcher()) PillButton("Open App info", primary = false) { openAppInfo() }
-                    Step("3", "Reminders & nudges", "Allow notifications so she can ring when your reminder is due.", hasNotifications(), "Allow") { askNotifications() }
-                    Step("4", "Keep her awake (optional)", "Some phones put apps to sleep. Set WorkBuddy to “Unrestricted” / “Don't optimise” so she stays around.", batteryFree(), "Open") { openBattery() }
+                    Step("2", "Reminders, water & nudges", "Allow notifications so she can ring when a reminder is due.", hasNotifications(), "Allow") { askNotifications() }
+                    Step("3", "Keep her awake", "Set WorkBuddy to “Unrestricted” / “Don't optimise” so the phone doesn't put her to sleep. On Tecno / Infinix (HiOS) also allow Auto-start for WorkBuddy.", batteryFree(), "Open") { openBattery() }
+                    if (!batteryFree()) PillButton("Tips for your phone (dontkillmyapp.com)", primary = false) { openUrl("https://dontkillmyapp.com/") }
+                    if (!hasWatcher() && !hasOverlay()) Step("4", "Fallback: display over other apps (optional)", "Only needed if you keep the accessibility service off. She'll then live on the bottom edge instead of the status bar.", false, "Allow") { openOverlay() }
                 }
             }
 
@@ -117,8 +115,15 @@ class MainActivity : ComponentActivity() {
                     ToggleRow("Cat on screen", "Off = features keep working quietly, with notifications instead of the cat.", p.catEnabled) { on -> set { p.catEnabled = on } }
                     Text("Where she lives", style = Strong, modifier = Modifier.padding(top = 8.dp))
                     ChipRow { Zone.entries.forEach { z -> Chip(z.label, p.zone == z) { set { p.zone = z } } } }
+                    if (p.zone == Zone.STATUS) Text(
+                        if (hasWatcher()) "Tiny, next to the clock. Tap her to bring her down to play; long-press for her menu. Swiping down still opens your notifications."
+                        else "Needs the accessibility service (step 1). Until then she lives on the bottom edge.",
+                        style = Small, modifier = Modifier.padding(top = 4.dp),
+                    )
                     Text("Size", style = Strong, modifier = Modifier.padding(top = 8.dp))
                     ChipRow { CatSize.entries.forEach { s -> Chip(s.label, p.size == s) { set { p.size = s } } } }
+                    Text("When summoned, she plays for", style = Strong, modifier = Modifier.padding(top = 8.dp))
+                    ChipRow { listOf(60 to "1 min", 180 to "3 min", 0 to "until sent back").forEach { (s, l) -> Chip(l, p.playSeconds == s) { set { p.playSeconds = s } } } }
                     HorizontalDivider(Modifier.padding(vertical = 8.dp), color = Ink.paper)
                     ToggleRow("Battery saver", "Slower animation and a lazier cat.", p.batterySaver) { on -> set { p.batterySaver = on } }
                     ToggleRow("Follow the phone's battery saver", null, p.autoBatterySaver) { on -> set { p.autoBatterySaver = on } }
@@ -133,13 +138,48 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // ---- swatting ----
-            InkCard {
+            // ---- focus mode ----
+            InkCard(fill = Ink.blush) {
                 Column {
-                    Text("Swat short videos", style = H2)
-                    ToggleRow("Swat away short-video feeds", "She runs over and presses Back for you.", p.swatEnabled) { on -> set { p.swatEnabled = on } }
-                    Feed.entries.forEach { f -> ToggleRow(f.label, null, p.feedOn(f), enabled = p.swatEnabled) { on -> set { p.setFeed(f, on) } } }
-                    ToggleRow("Also in the browser", "Chrome, Brave, Edge, Firefox, Samsung Internet.", p.swatInBrowser, enabled = p.swatEnabled) { on -> set { p.swatInBrowser = on } }
+                    Text("Focus mode 🎯", style = H2)
+                    ToggleRow("Focus mode", "Limits the apps you pick. Nothing is blocked until you turn this on (there's a Quick Settings tile too).", p.focusEnabled) { on -> set { p.focusEnabled = on } }
+                    val rules = p.focusRules
+                    if (rules.isEmpty()) Text("No apps yet. Add Instagram, YouTube, WhatsApp… anything that eats your time.", style = Small, modifier = Modifier.padding(vertical = 6.dp))
+                    rules.forEach { r ->
+                        Column(Modifier.padding(vertical = 6.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(r.label, style = Strong, modifier = Modifier.weight(1f))
+                                Text("✕", style = Strong.copy(color = Ink.stripe), modifier = Modifier.clickable { set { p.focusRules = rules.filter { it.pkg != r.pkg } } }.padding(8.dp))
+                            }
+                            ChipRow {
+                                Chip("Whole app", r.mode == FocusMode.WHOLE) { set { p.focusRules = rules.map { if (it.pkg == r.pkg) it.copy(mode = FocusMode.WHOLE) else it } } }
+                                if (Feed.forPackage(r.pkg) != null) Chip("Just Reels / Shorts", r.mode == FocusMode.FEED) { set { p.focusRules = rules.map { if (it.pkg == r.pkg) it.copy(mode = FocusMode.FEED) else it } } }
+                            }
+                            Text(
+                                if (r.mode == FocusMode.WHOLE) "When you open it she asks “how long?” (5 / 10 / 15 / custom). The countdown ticks next to her in the status bar; when it hits zero she closes the app."
+                                else "The app stays open; only its Reels / Shorts get swatted the moment you land on them.",
+                                style = Small,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    PillButton("＋ Add an app") { startActivity(Intent(this@MainActivity, AppPickerActivity::class.java)) }
+                    Text("After the time runs out, keep the app closed for", style = Strong, modifier = Modifier.padding(top = 12.dp))
+                    ChipRow { listOf(5, 15, 30, 60).forEach { m -> Chip("$m min", p.focusCooldownMinutes == m) { set { p.focusCooldownMinutes = m } } } }
+                    ToggleRow("Also catch Reels & Shorts in the browser", "Chrome, Brave, Edge, Firefox, Samsung Internet.", p.swatInBrowser) { on -> set { p.swatInBrowser = on } }
+                }
+            }
+
+            // ---- water ----
+            InkCard(fill = Ink.sky) {
+                Column {
+                    Text("Water 💧", style = H2)
+                    ToggleRow("Water reminders", "Every so often she brings her glass, drinks, and asks if you had one. Only time with the screen on counts.", p.waterEnabled) { on -> set { p.waterEnabled = on } }
+                    if (p.waterEnabled) ChipRow { listOf(20, 30, 45, 60, 90).forEach { m -> Chip("$m min", p.waterEveryMinutes == m) { set { p.waterEveryMinutes = m } } } }
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                        Text("${p.waterToday} today · ${p.waterTotal} total", style = Body, modifier = Modifier.weight(1f))
+                        PillButton("I drank one 💧", primary = false) { set { val cat = Bus.cat; if (cat != null) cat.logWater() else { p.waterToday = p.waterToday + 1; p.waterTotal = p.waterTotal + 1 } } }
+                    }
                 }
             }
 
@@ -147,7 +187,7 @@ class MainActivity : ComponentActivity() {
             InkCard {
                 Column {
                     Text("Nudges & company", style = H2)
-                    ToggleRow("“Take a break?” nudges", "After a while in Instagram, YouTube, TikTok, X, Reddit…", p.nudgesEnabled) { on -> set { p.nudgesEnabled = on } }
+                    ToggleRow("“Take a break?” nudges", "After a while in Instagram, YouTube, TikTok, X, Reddit… (apps with a Focus mode timer are handled there instead)", p.nudgesEnabled) { on -> set { p.nudgesEnabled = on } }
                     if (p.nudgesEnabled) ChipRow { listOf(10, 20, 30, 45).forEach { m -> Chip("$m min", p.nudgeMinutes == m) { set { p.nudgeMinutes = m } } } }
                     ToggleRow("Typing buddy", "She taps a tiny keyboard while you type in apps (Chrome's address bar doesn't tell her).", p.typingBuddy) { on -> set { p.typingBuddy = on } }
                     ToggleRow("Reminders & focus timer", "Long-press the cat → Set a reminder / Focus 25 min.", p.remindersEnabled) { on -> set { p.remindersEnabled = on } }
@@ -157,7 +197,7 @@ class MainActivity : ComponentActivity() {
             InkCard(fill = Ink.mint) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("How to play", style = H2)
-                    Text("• Tap her to pet her\n• Long-press for her menu\n• Drag to pick her up, fling to throw\n• Quick Settings tile: show / hide in one tap", style = Body)
+                    Text("• In the status bar: tap her to bring her down, long-press for her menu\n• Out playing: tap to pet, drag to pick her up, fling to throw\n• She goes back up by herself (or long-press → Go back up)\n• Quick Settings tiles: show / hide the cat, Focus mode on / off", style = Body)
                 }
             }
             Spacer(Modifier.height(24.dp))
@@ -171,7 +211,7 @@ class MainActivity : ComponentActivity() {
             Column(Modifier.weight(1f)) {
                 Text(title, style = Strong)
                 if (!done) {
-                    Text(text.replace("*", ""), style = Small)
+                    Text(text, style = Small)
                     Spacer(Modifier.height(8.dp))
                     PillButton(action, onClick = onClick)
                 }

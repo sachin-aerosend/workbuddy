@@ -16,6 +16,12 @@ and swats away Reels and Shorts tabs before you get sucked in.
 - **Reminds you to drink water:** every 30 minutes at your desk (you can change it) the cat sips from her glass and asks if you had one, and counts your glasses for the day. Time away doesn't count.
 - **Invisible on screen share** and hidden during full-screen apps.
 
+### On Android (beta)
+
+- **Lives in the status bar:** tiny, between the clock and the battery, in the free space she measures herself. Tap to bring her down to play, long-press for her menu; swiping down still opens your notifications.
+- **Focus mode:** pick the apps that eat your time. Per app, either *whole app* (she asks "how long?" when you open it, shows the countdown beside her and closes the app at zero, then keeps it shut for a cooldown) or *just Reels / Shorts* (the app stays open, the feed gets swatted).
+- **Water, reminders, break nudges, typing buddy,** each with its own switch. Nothing leaves the phone.
+
 ## Project layout
 
 | Folder | What's in it |
@@ -23,7 +29,7 @@ and swats away Reels and Shorts tabs before you get sucked in.
 | `app/` | Electron desktop app (main process, cat "brain", renderer, local bridge) |
 | `extension/` | Chrome / Edge / Brave extension (MV3) that watches tabs and talks to the app on `127.0.0.1:47821` |
 | `website/` | Static landing page (deployed on Vercel) |
-| `android/` | WorkBuddy for Android (Kotlin): overlay cat, accessibility watcher for Reels/Shorts, reminders |
+| `android/` | WorkBuddy for Android (Kotlin): status-bar cat hosted by an accessibility service, Focus mode app timers, Reels/Shorts swatting, water and reminders |
 | `tools/` | Sprite generator, icon builder, tests and dev helpers |
 
 ## Develop

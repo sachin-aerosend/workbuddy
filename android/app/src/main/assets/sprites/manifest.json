@@ -37,6 +37,16 @@
       "fps": 8,
       "loop": false
     },
+    "drink": {
+      "frames": 8,
+      "fps": 4,
+      "loop": false
+    },
+    "holdGlass": {
+      "frames": 6,
+      "fps": 3,
+      "loop": true
+    },
     "typing": {
       "frames": 4,
       "fps": 0,
@@ -98,7 +108,8 @@
     "z": 1,
     "bang": 2,
     "question": 3,
-    "sparkle": 4
+    "sparkle": 4,
+    "drop": 5
   },
   "ball": {
     "w": 9,

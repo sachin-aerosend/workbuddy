@@ -9,6 +9,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -118,9 +120,14 @@ fun ToggleRow(title: String, sub: String? = null, checked: Boolean, enabled: Boo
     }
 }
 
+/** Chips that wrap onto the next line when they don't fit. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChipRow(content: @Composable () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(vertical = 4.dp)) { content() }
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.padding(vertical = 4.dp),
+    ) { content() }
 }
 
 /** The animated pixel cat for app screens. */
