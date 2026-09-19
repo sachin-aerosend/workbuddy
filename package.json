@@ -1,0 +1,65 @@
+{
+  "name": "workbuddy",
+  "productName": "WorkBuddy",
+  "version": "1.0.0",
+  "description": "A pixel cat that lives on your taskbar and keeps you off Reels.",
+  "main": "app/main.js",
+  "scripts": {
+    "start": "electron .",
+    "sprites": "node tools/build-sprites.js && node tools/build-icon.js",
+    "test": "node tools/test-brain.js",
+    "dist": "electron-builder --win"
+  },
+  "author": "Sachin Sahani",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^44.4.3",
+    "electron-builder": "^26.15.3",
+    "gifenc": "^1.0.3",
+    "pngjs": "^7.0.0"
+  },
+  "dependencies": {
+    "koffi": "^3.3.1",
+    "uiohook-napi": "^1.5.5",
+    "ws": "^8.21.3"
+  },
+  "build": {
+    "appId": "com.workbuddy.cat",
+    "productName": "WorkBuddy",
+    "icon": "assets/icon.ico",
+    "files": [
+      "app/**",
+      "assets/icon.ico",
+      "package.json"
+    ],
+    "npmRebuild": false,
+    "asarUnpack": [
+      "**/node_modules/uiohook-napi/**",
+      "**/node_modules/koffi/**"
+    ],
+    "extraResources": [
+      {
+        "from": "extension",
+        "to": "extension"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "shortcutName": "WorkBuddy"
+    }
+  }
+}

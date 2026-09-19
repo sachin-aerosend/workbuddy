@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "WorkBuddy Cat",
+  "version": "1.0.0",
+  "description": "Lets your WorkBuddy desktop cat swat away Reels/Shorts tabs and nudge you about tabs you forgot.",
+  "permissions": ["tabs", "storage", "alarms", "scripting", "sessions"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "WorkBuddy Cat",
+    "default_popup": "popup.html",
+    "default_icon": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
+  },
+  "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
+}

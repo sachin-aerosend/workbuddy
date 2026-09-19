@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.vercel/
+
+# Raw third-party art pack (CatPack / RetroCats). Not ours to redistribute;
+# the generated sprites in app/renderer/sprites are what the app uses.
+assets/source/
+
+*.log
+.DS_Store
+Thumbs.db

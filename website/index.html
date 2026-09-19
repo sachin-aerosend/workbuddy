@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WorkBuddy — a tiny cat that keeps you off Reels</title>
+  <meta name="description" content="WorkBuddy is a pixel cat that lives on your Windows taskbar. It naps in the corners, types along with you, and swats away Reels and Shorts before you get sucked in.">
+  <meta property="og:title" content="WorkBuddy — a tiny cat that keeps you off Reels">
+  <meta property="og:description" content="A pixel cat for your taskbar that closes time-wasting tabs, nudges you about forgotten ones, and keeps you company while you work.">
+  <meta property="og:image" content="assets/og.png">
+  <meta name="theme-color" content="#fffaf2">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="#top" aria-label="WorkBuddy home">
+    <img src="assets/icon.png" alt="" width="36" height="36">
+    <span>WorkBuddy</span>
+  </a>
+  <nav class="nav-links" aria-label="Main">
+    <a href="#features">What it does</a>
+    <a href="#how">How it works</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+  <a class="btn btn-small" href="#download" data-download>Download</a>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="dot"></span> Free for Windows</p>
+      <h1>A tiny cat <br>that keeps you <br><span class="swash">off Reels.</span></h1>
+      <p class="lede">WorkBuddy lives on your taskbar. It naps in the corners, types along with you, and swats away time-wasting tabs before you get sucked in.</p>
+      <div class="cta-row">
+        <a class="btn btn-big" href="#download" data-download>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M0 2.2 6.5 1.3v6.2H0zm7.3-1L16 0v7.5H7.3zM0 8.3h6.5v6.3L0 13.7zm7.3 0H16V16l-8.7-1.2z"/></svg>
+          Download for Windows
+        </a>
+        <a class="btn btn-ghost" href="#features">See what it does</a>
+      </div>
+      <p class="fine">Windows 10 &amp; 11 · works with Chrome, Edge &amp; Brave · no account needed</p>
+    </div>
+
+    <div class="scene-wrap">
+      <div class="scene" id="scene" aria-label="Animated demo: the cat walks along a taskbar and closes a Reels tab">
+        <div class="browser">
+          <div class="tabstrip" id="tabstrip">
+            <div class="tab"><i class="fav fav-mail"></i><span>Inbox (3)</span></div>
+            <div class="tab active" id="tab-work"><i class="fav fav-crm"></i><span>Q3 Pipeline</span></div>
+            <div class="tab"><i class="fav fav-doc"></i><span>Proposal draft</span></div>
+            <div class="tab-new">+</div>
+          </div>
+          <div class="toolbar"><span class="url" id="url">app.crm.com/pipeline</span></div>
+          <div class="page" id="page">
+            <div class="work">
+              <div class="kpis">
+                <div class="kpi"><b>₹18.4L</b><span>open pipeline</span></div>
+                <div class="kpi"><b>12</b><span>deals this week</span></div>
+                <div class="kpi"><b>68%</b><span>to target</span></div>
+              </div>
+              <div class="board">
+                <div class="col"><em>Discovery</em><i></i><i></i><i class="s"></i></div>
+                <div class="col"><em>Demo</em><i></i><i class="s"></i></div>
+                <div class="col"><em>Proposal</em><i></i><i></i></div>
+                <div class="col"><em>Won</em><i class="w"></i></div>
+              </div>
+            </div>
+            <div class="reels" id="reels" hidden>
+              <div class="reel"><div class="reel-shine"></div></div>
+              <div class="reel-veil"><span>🐾 psst… the cat is coming for this tab</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="taskbar">
+          <span class="tb-start"></span><span class="tb-app"></span><span class="tb-app on"></span><span class="tb-app"></span>
+          <span class="tb-clock">10:42</span>
+        </div>
+        <div class="actor" id="cat"><div class="sprite" data-anim="idle"></div></div>
+        <div class="say" id="say" hidden></div>
+        <div class="fx-layer" id="fx"></div>
+      </div>
+      <p class="scene-hint">psst, you can pet it ↑</p>
+    </div>
+  </section>
+
+  <!-- ============ STRIP ============ -->
+  <section class="strip" aria-label="Highlights">
+    <ul>
+      <li><b>Closes</b> Reels, Shorts &amp; more</li>
+      <li><b>Nudges</b> you about forgotten tabs</li>
+      <li><b>Invisible</b> on screen share</li>
+      <li><b>Never</b> records what you type</li>
+    </ul>
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section class="features" id="features">
+    <div class="section-head">
+      <p class="eyebrow">Meet your buddy</p>
+      <h2>Part pet, part focus coach.</h2>
+      <p class="sub">It stays out of the way, in the corners and along the taskbar, until you need a nudge.</p>
+    </div>
+
+    <div class="grid">
+      <article class="card card-feature tone-blush">
+        <div class="stage"><div class="sprite big" data-anim="swipe"></div><span class="stage-tag">no!</span></div>
+        <h3>Swats away Reels</h3>
+        <p>Open Instagram Reels or YouTube Shorts and the page blurs straight away. The cat runs over, leaps onto the tab and swipes it shut.</p>
+      </article>
+
+      <article class="card card-feature tone-sky">
+        <div class="stage stage-bubble">
+          <div class="mini-bubble" id="nudge">
+            <b>close “LinkedIn | Feed”?</b>
+            <small>untouched for 3 h</small>
+            <span class="mini-btns"><button type="button" data-nudge="yes">yes</button><button type="button" data-nudge="no">nope</button><button type="button" data-nudge="later">later</button></span>
+          </div>
+          <div class="sprite" data-anim="idle"></div>
+        </div>
+        <h3>Nudges forgotten tabs</h3>
+        <p>Tabs you haven't touched in an hour get a small thought bubble. Tap yes and they're gone, with an undo if you change your mind.</p>
+      </article>
+
+      <article class="card card-feature tone-mint card-type">
+        <div class="stage"><div class="sprite big" id="typer" data-anim="typing" data-frame="0"></div></div>
+        <h3>Types along with you</h3>
+        <p>Start typing and it pulls out a tiny keyboard. Left-hand keys tap the left paw, right-hand keys the right. <kbd>Enter</kbd> gets both.</p>
+        <p class="try">Go on, type something ⌨</p>
+      </article>
+
+      <article class="card card-feature tone-lav">
+        <div class="stage"><div class="sprite big" data-anim="sleep"></div><div class="zzz"><i></i><i></i><i></i></div></div>
+        <h3>Naps when you step away</h3>
+        <p>Walk away from your desk and it curls up for a nap. Come back and it stretches, yawns and gets back to it.</p>
+      </article>
+
+      <article class="card card-feature tone-sun">
+        <div class="stage"><div class="sprite big" data-anim="pounce"></div><div class="yarn"></div></div>
+        <h3>Plays in the corners</h3>
+        <p>Chases a yarn ball, rolls around, gets the zoomies, hides in a box. It even hops across to your other monitor.</p>
+      </article>
+
+      <article class="card card-feature tone-ink">
+        <div class="stage"><div class="sprite big" data-anim="loaf"></div><div class="shield">hidden<br>on calls</div></div>
+        <h3>Invisible on screen share</h3>
+        <p>You see the cat. Your prospects on Zoom, Meet or Teams don't. It also steps aside for full-screen videos and slides.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ GALLERY ============ -->
+  <section class="gallery" aria-label="All the cat's animations">
+    <div class="section-head">
+      <p class="eyebrow">18 little moods</p>
+      <h2>Every animation, drawn pixel by pixel.</h2>
+    </div>
+    <div class="moods" id="moods"></div>
+  </section>
+
+  <!-- ============ HOW ============ -->
+  <section class="how" id="how">
+    <div class="section-head">
+      <p class="eyebrow">Two-minute setup</p>
+      <h2>How it works</h2>
+    </div>
+    <ol class="steps">
+      <li class="card">
+        <span class="num">1</span>
+        <h3>Install the app</h3>
+        <p>Download and run the installer. The cat hops onto your taskbar and starts with Windows from then on.</p>
+      </li>
+      <li class="card">
+        <span class="num">2</span>
+        <h3>Add the browser extension</h3>
+        <p>Add it to Chrome, Edge or Brave so the cat can see which tabs are open and close the ones you've blocked. <a href="#extension">How to add it →</a></p>
+      </li>
+      <li class="card">
+        <span class="num">3</span>
+        <h3>Get back to work</h3>
+        <p>Pick your blocked sites and nudge timing from the tray menu. The cat takes care of the rest.</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ============ PRIVACY ============ -->
+  <section class="privacy">
+    <div class="card privacy-card">
+      <div class="privacy-cat"><div class="sprite big" data-anim="box"></div></div>
+      <div>
+        <p class="eyebrow">Private by design</p>
+        <h2>Your cat keeps secrets.</h2>
+        <ul class="checks">
+          <li>It knows <em>which side</em> of the keyboard you pressed, never <em>what</em> you typed. Nothing is logged.</li>
+          <li>Tab info stays on your computer. The app and extension talk only to each other, and nothing is sent anywhere.</li>
+          <li>No account, no tracking, no ads.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="faq" id="faq">
+    <div class="section-head">
+      <p class="eyebrow">Questions</p>
+      <h2>Good to know</h2>
+    </div>
+    <div class="qa">
+      <details open><summary>Is it free?</summary><p>Yes. Download it, install it and keep it.</p></details>
+      <details><summary>Which sites does it block?</summary><p>Instagram Reels, YouTube Shorts and Facebook Reels out of the box, with TikTok one switch away. You can add any site from the tray menu. The rest of Instagram and YouTube still work.</p></details>
+      <details><summary>Will it get in my way?</summary><p>It sticks to the taskbar and screen corners, and everything except the cat itself is click-through. It hides for full-screen apps, and you can send it away for an hour from the tray.</p></details>
+      <details><summary>Will people see it when I share my screen?</summary><p>No. Windows keeps it out of screen shares and recordings, so only you see it.</p></details>
+      <details><summary>Does it slow my computer down?</summary><p>Barely. It's a 32-pixel cat, and it sleeps (and saves power) when you do.</p></details>
+      <details><summary>Mac version?</summary><p>Not yet. It's Windows-only for now, with Mac on the wishlist.</p></details>
+    </div>
+  </section>
+
+  <!-- ============ DOWNLOAD ============ -->
+  <section class="download" id="download">
+    <div class="card download-card">
+      <div class="dl-cats">
+        <div class="sprite" data-anim="happy"></div>
+        <div class="sprite" data-anim="idle" style="--delay:-.4s"></div>
+        <div class="sprite" data-anim="dracula"></div>
+      </div>
+      <h2>Adopt your WorkBuddy</h2>
+      <p>Free for Windows 10 &amp; 11. Takes a minute to set up.</p>
+      <a class="btn btn-big" href="#download" data-download>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M0 2.2 6.5 1.3v6.2H0zm7.3-1L16 0v7.5H7.3zM0 8.3h6.5v6.3L0 13.7zm7.3 0H16V16l-8.7-1.2z"/></svg>
+        Download for Windows
+      </a>
+      <p class="fine">Windows may show “Windows protected your PC” the first time. Click <b>More info → Run anyway</b>.</p>
+    </div>
+
+    <div class="card ext-card" id="extension">
+      <div class="ext-head">
+        <div>
+          <p class="eyebrow">Step 2</p>
+          <h3>Add the browser extension</h3>
+          <p>This lets the cat see your tabs so it can close the blocked ones. Works in Chrome, Edge and Brave.</p>
+        </div>
+        <a class="btn btn-ghost" href="#extension" data-extension>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 1.5a6.5 6.5 0 0 1 5.63 3.25H8a3.25 3.25 0 0 0-3.07 2.2L2.8 3.25A6.48 6.48 0 0 1 8 1.5zM1.5 8c0-1.07.26-2.08.72-2.97l2.82 4.9A3.25 3.25 0 0 0 7.3 11.2l-1.9 3.3A6.5 6.5 0 0 1 1.5 8zM8 14.5h-.13l1.9-3.3a3.25 3.25 0 0 0 1.9-4.95h3.53A6.5 6.5 0 0 1 8 14.5zM8 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg>
+          Download extension (.zip)
+        </a>
+      </div>
+      <ol class="ext-steps">
+        <li><b>Unzip</b> the file you downloaded.</li>
+        <li>Open <code>chrome://extensions</code> (or <code>edge://extensions</code>).</li>
+        <li>Turn on <b>Developer mode</b> (top right).</li>
+        <li>Click <b>Load unpacked</b> and pick the unzipped folder. Done 🐾</li>
+      </ol>
+      <p class="fine">Already installed the app? The extension is also in its folder: tray icon → <b>Install browser extension…</b></p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-inner">
+    <a class="brand" href="#top"><img src="assets/icon.png" alt="" width="28" height="28"><span>WorkBuddy</span></a>
+    <p>Made with 🧡 and a lot of tiny pixels.</p>
+  </div>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>
