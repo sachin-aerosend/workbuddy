@@ -29,6 +29,9 @@ const PALETTE = {
   D: '#b3644d', // box side
   E: '#994f39', // box edge
   n: '#f7e7c6', // bed cushion
+  g: '#e3f4ff', // glass (empty part)
+  q: '#7cc8f2', // water
+  Q: '#4a9fd8', // water, deeper
 };
 
 const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));

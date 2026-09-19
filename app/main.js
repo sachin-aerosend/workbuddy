@@ -147,6 +147,7 @@ function openCatMenu() {
     { id: 'remind', label: '⏰ Set a reminder…' },
     { id: 'focus', label: '🍅 Focus for 25 min' },
     ...reminders.all().map(r => ({ id: `cancel:${r.id}`, label: `✕ ${fmtLeft(r.due - Date.now())} · ${r.text.slice(0, 22)}`, kind: 'cancel' })),
+    { id: 'water', label: waterLabel() },
     { id: 'ball', label: '🧶 Play with the ball' },
     { id: 'patrol', label: '🐾 Walk on my tabs' },
     { id: 'nap', label: '😴 Nap time' },
@@ -157,6 +158,36 @@ function openCatMenu() {
   ];
   brain.openMenu(items);
 }
+// ---------- water ----------
+const glassesToday = () => settings.stats().waterToday || 0;
+function waterLabel() {
+  const n = glassesToday();
+  return n ? `💧 Drink water now · ${n} today` : '💧 Drink water now';
+}
+function logWater(how) {
+  settings.bump('water');
+  log('water glass', how, `today=${glassesToday()}`);
+  refreshTray();
+}
+// Cat hidden or sent away: a gentle Windows notification instead. Full screen (games, slides): wait.
+function waterGate() {
+  if (fullscreenHide) return 'defer';
+  return catVisible() ? 'show' : 'notify';
+}
+function waterNotify() {
+  log('water reminder (notification)');
+  if (!Notification.isSupported()) return;
+  new Notification({ title: 'WorkBuddy 💧', body: 'Time for a glass of water!', icon: ICON, silent: true }).show();
+}
+function setWater(patch) {
+  settings.save(patch);
+  const s = settings.get();
+  log('water settings', s.waterEnabled ? 'on' : 'off', `${s.waterEveryMinutes}min`);
+  if (patch.waterEnabled !== undefined) brain.say(s.waterEnabled ? `water reminders on 💧 every ${s.waterEveryMinutes} min` : 'okay, no more water reminders', 2.5);
+  else brain.say(`water every ${s.waterEveryMinutes} min 💧`, 2.5);
+  refreshTray();
+}
+
 function addReminder(text, minutes) {
   const r = reminders.add(text, minutes);
   log('reminder set', r.id, `${minutes}min`);
@@ -180,6 +211,7 @@ function onMenuChoice(id) {
   if (id === 'remind') return brain.openForm();
   if (id === 'focus') { addReminder('Focus session done! Stretch and take 5 🐾', 25); return brain.say('focus mode! 25:00 🍅', 2.5); }
   if (id.startsWith('cancel:')) { reminders.remove(id.slice(7)); return brain.say('okay, cancelled', 2); }
+  if (id === 'water') { logWater('menu'); return brain.drinkNow(); }
   if (id === 'ball') return brain.interrupt(brain.grounded(brain.ballPlay()), 'life');
   if (id === 'patrol') return brain.interrupt(brain.grounded(brain.tabPatrol()), 'life');
   if (id === 'nap') return brain.interrupt(brain.nap(60), 'life');
@@ -198,6 +230,10 @@ function onBubbleAnswer(b, answer) {
   }
   if (b.kind === 'alarm') {
     if (answer === 'snooze') { addReminder(b.remText, 5); brain.say('5 more minutes… 😴', 2); }
+    return;
+  }
+  if (b.kind === 'water') {
+    if (answer === 'yes') logWater('reminder');
     return;
   }
   if (b.kind === 'undo' && answer === 'undo') bridge.broadcast({ type: 'undo', sessionId: b.sessionId });
@@ -283,7 +319,7 @@ function loop() {
   // Near the top of a screen there's no room for a bubble above the cat: put the cat at the top of
   // its window and the bubble underneath instead.
   const d = screen.getDisplayNearestPoint({ x: Math.round(brain.x), y: Math.round(brain.y - 10) }).bounds;
-  const bubbleH = { menu: 60 + 27 * (brain.bubble?.buttons?.length || 0), form: 190 }[brain.bubble?.kind] || 120;
+  const bubbleH = { menu: 60 + 27 * (brain.bubble?.buttons?.length || 0), form: 190, water: 135 }[brain.bubble?.kind] || 120;
   const below = !!brain.bubble && brain.y - catHeight() - bubbleH < d.y;
   const catBottom = below ? Math.ceil(catHeight()) + 4 : WIN_H;
   const b = { x: Math.round(brain.x - WIN_W / 2), y: Math.round(brain.y - catBottom), width: WIN_W, height: WIN_H };
@@ -349,10 +385,10 @@ function refreshTray() {
   if (!tray) return;
   const s = settings.get(), st = settings.stats();
   const paused = Date.now() < pausedUntil;
-  tray.setToolTip(`WorkBuddy 🐾  blocked today: ${st.blockedToday} · tabs tidied: ${st.tidiedToday}`);
+  tray.setToolTip(`WorkBuddy 🐾  blocked today: ${st.blockedToday} · tabs tidied: ${st.tidiedToday} · water: ${st.waterToday || 0} 💧`);
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: `WorkBuddy 🐾`, enabled: false },
-    { label: `Blocked today: ${st.blockedToday}   ·   Tabs tidied: ${st.tidiedToday}`, enabled: false },
+    { label: `Blocked today: ${st.blockedToday}   ·   Tabs tidied: ${st.tidiedToday}   ·   Water: ${st.waterToday || 0} 💧`, enabled: false },
     { label: browserConnected ? 'Browser: connected ✓' : 'Browser: not connected (install the extension)', enabled: false },
     { type: 'separator' },
     { label: hidden ? 'Show cat' : 'Hide cat', click: () => { hidden = !hidden; refreshTray(); } },
@@ -364,8 +400,12 @@ function refreshTray() {
     { label: 'Walk on my tabs', click: () => brain.interrupt(brain.grounded(brain.tabPatrol()), 'life') },
     { label: 'Nap time', click: () => brain.interrupt(brain.nap(60), 'life') },
     { label: 'Zoomies!', click: () => brain.interrupt(brain.grounded(brain.zoomies()), 'life') },
+    { label: 'I drank a glass of water 💧', click: () => { logWater('tray'); brain.drinkNow(); } },
     { type: 'separator' },
     { label: 'Hide from screen share', type: 'checkbox', checked: s.hideFromScreenShare !== false, click: () => toggleScreenShare() },
+    { label: 'Water reminders', type: 'checkbox', checked: !!s.waterEnabled, click: m => setWater({ waterEnabled: m.checked }) },
+    { label: 'Water reminder every…', enabled: !!s.waterEnabled, submenu: [20, 30, 45, 60, 90].map(m => (
+      { label: `${m} minutes`, type: 'radio', checked: Number(s.waterEveryMinutes) === m, click: () => setWater({ waterEveryMinutes: m }) })) },
     { label: 'Typing buddy', type: 'checkbox', checked: s.typingBuddy, click: m => { settings.save({ typingBuddy: m.checked }); } },
     { label: 'Start with Windows', type: 'checkbox', checked: s.startWithWindows, click: m => { settings.save({ startWithWindows: m.checked }); applyLogin(); } },
     { label: 'Edit settings (blocked sites, timings)…', click: () => { settings.ensureFile(); shell.openPath(settings.path()); } },
@@ -399,7 +439,10 @@ function applyLogin() {
 // ---------- boot ----------
 app.whenReady().then(() => {
   createWindow();
-  brain = new Brain({ displays, settings: settings.get, onCloseTab, onBubbleAnswer, perch: () => perchCache });
+  brain = new Brain({
+    displays, settings: settings.get, onCloseTab, onBubbleAnswer, perch: () => perchCache,
+    waterGate, onWaterNotify: waterNotify, waterCount: glassesToday,
+  });
   timers.push(setInterval(updatePerch, 500));
   brain.onError = err => log('behaviour crashed:', String(err && err.stack || err).split('\n').slice(0, 3).join(' | '));
 
@@ -462,7 +505,7 @@ app.whenReady().then(() => {
     log('probe yes-button', p.x, p.y);
   }, 1000);
 
-  // Dev: WB_UI=menu|form|clock|alarm puts the cat on the primary screen and opens that UI (for screenshots).
+  // Dev: WB_UI=menu|form|clock|alarm|water|drink puts the cat on the primary screen and opens that UI (for screenshots).
   if (process.env.WB_UI) setTimeout(() => {
     const w = screen.getPrimaryDisplay().workArea;
     brain.x = w.x + w.width - 260; brain.y = w.y + w.height;
@@ -473,6 +516,8 @@ app.whenReady().then(() => {
     if (ui === 'menu') setTimeout(openCatMenu, 800);
     if (ui === 'form') brain.openForm();
     if (ui === 'alarm') brain.alarm({ id: 'demo', text: 'finish the proposal' });
+    if (ui === 'water') { brain.lastKey = -1e9; brain.interrupt(brain.waterReminder(), 'water'); }
+    if (ui === 'drink') brain.interrupt((function* () { while (true) yield* brain.play('drink'); })(), 'life');
   }, 1500);
 
   // Dev: WB_DEMO=<behaviour> starts a specific behaviour, e.g. WB_DEMO=visitMonitor.

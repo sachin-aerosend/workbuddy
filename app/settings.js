@@ -27,6 +27,8 @@ const DEFAULTS = {
   hideInFullscreen: true,
   hideFromScreenShare: true,   // invisible in screen shares and recordings (you still see it)
   startWithWindows: true,
+  waterEnabled: true,          // the cat drinks and asks if you had a glass of water
+  waterEveryMinutes: 30,       // ...every this many minutes at the desk (time away doesn't count)
   bridgePort: 47821,
 };
 
@@ -42,11 +44,13 @@ function writeJson(name, data) {
 }
 
 let settings = { ...DEFAULTS, ...readJson('settings.json', {}) };
-let stats = readJson('stats.json', { day: '', blockedToday: 0, tidiedToday: 0, blockedTotal: 0, tidiedTotal: 0 });
+const STATS0 = { day: '', blockedToday: 0, tidiedToday: 0, waterToday: 0, blockedTotal: 0, tidiedTotal: 0, waterTotal: 0 };
+let stats = { ...STATS0, ...readJson('stats.json', {}) };
 
 function rollDay() {
-  const today = new Date().toISOString().slice(0, 10);
-  if (stats.day !== today) Object.assign(stats, { day: today, blockedToday: 0, tidiedToday: 0 });
+  const d = new Date(); // local calendar day, so "today" resets at the user's midnight
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  if (stats.day !== today) Object.assign(stats, { day: today, blockedToday: 0, tidiedToday: 0, waterToday: 0 });
 }
 
 module.exports = {
@@ -58,7 +62,8 @@ module.exports = {
   stats() { rollDay(); return stats; },
   bump(kind) {
     rollDay();
-    stats[`${kind}Today`]++; stats[`${kind}Total`]++;
+    stats[`${kind}Today`] = (stats[`${kind}Today`] || 0) + 1;
+    stats[`${kind}Total`] = (stats[`${kind}Total`] || 0) + 1;
     writeJson('stats.json', stats);
   },
 };

@@ -13,6 +13,7 @@ and swats away Reels and Shorts tabs before you get sucked in.
 - **Nudges forgotten tabs:** a thought bubble asks whether to close tabs you haven't touched in an hour (with undo).
 - **Types along with you:** a tiny keyboard, left/right paws follow your keys. It only knows *which side* you pressed, never *what*.
 - **Lives on your screens:** walks the taskbar, strolls on your tab bar, hops between monitors, plays with yarn, naps when you're away. Drag it and drop it and it lands.
+- **Reminds you to drink water:** every 30 minutes at your desk (you can change it) the cat sips from her glass and asks if you had one, and counts your glasses for the day. Time away doesn't count.
 - **Invisible on screen share** and hidden during full-screen apps.
 
 ## Project layout

@@ -100,6 +100,7 @@ function draw(now) {
   for (const f of state.fx) {
     const age = f.age;
     let fx = cx + f.dx * dpr, fy = headY, alpha = 1, idx = M.fx[f.type];
+    if (f.type === 'drop') { fy -= age * 24 * dpr; fx += Math.sin(age * 5) * 2 * dpr; alpha = 1 - age / 1.4; }
     if (f.type === 'heart') { fy -= age * 28 * dpr; fx += Math.sin(age * 6) * 3 * dpr; alpha = 1 - age / 1.4; }
     if (f.type === 'z') { fx += (10 + age * 8) * px / 3; fy -= age * 22 * dpr; alpha = 1 - age / 2.4; }
     if (f.type === 'bang') { fy -= (8 + Math.abs(Math.sin(age * 10)) * 4) * dpr; alpha = age < 0.8 ? 1 : (1 - age) * 5; }

@@ -88,6 +88,35 @@ function swipeFrames() {
   return [f('focus', 21, 9), f('focus', 21, 9), f('focus', 24, 15), f('closed', 25, 24), f('closed', 25, 24), base];
 }
 
+// ---------- Water: a little glass, held and sipped (water reminder) ----------
+// 7x9 tumbler (5x7 inside): shine down the left, `level` rows of water (0-7), darker bottom row.
+function glass(level) {
+  let g = P.rect(P.blank(7, 9), 1, 1, 5, 7, 'g');
+  if (level > 0) g = P.rect(g, 1, 8 - level, 5, level, 'q');
+  if (level > 1) g = P.rect(g, 1, 7, 5, 1, 'Q');
+  g = P.plot(g, [[1, 2, 'w'], [1, 3, 'w'], [1, 4, 'w']]);
+  return P.outline(g);
+}
+// Glass with its top-left at (gx,gy), both front paws hugging its sides (paws drawn over the rim).
+// Raised glasses get arms reaching up from the shoulders (drawn behind the glass).
+function withGlass(base, level, gx, gy, arms = false) {
+  let g = base;
+  if (arms) { g = P.paste(g, arm(6, 22, gx - 3, gy + 4), 0, 0); g = P.paste(g, arm(12, 22, gx + 6, gy + 4), 0, 0); }
+  g = P.paste(g, glass(level), gx, gy);
+  g = P.paste(g, pawGrid, gx - 4, gy + 3);
+  return P.paste(g, pawGrid, gx + 5, gy + 3);
+}
+function drinkFrames() {
+  const hold = (eyes, level) => withGlass(withFace(SIT, { eyes }), level, 7, 18);
+  const lift = level => withGlass(withFace(SIT, { eyes: 'open' }), level, 7, 16, true);
+  const sip = (level, dy) => withGlass(withFace(SIT, { eyes: 'closed' }, dy), level, 7, 13 + dy, true);
+  return [hold('open', 6), lift(6), sip(5, 0), sip(4, 1), sip(3, 0), sip(2, 1), lift(2), hold('happy', 2)];
+}
+function holdGlassFrames() {
+  const h = eyes => withGlass(withFace(SIT, { eyes }), 6, 7, 18);
+  return [h('open'), h('open'), h('open'), h('open'), h('closed'), h('open')];
+}
+
 // Picked up by the scruff: body hangs, legs dangle and kick, tail swings.
 function dangleFrames() {
   const upper = SIT.map((row, y) => (y >= 21 ? '.'.repeat(32) : y >= 18 ? row.slice(0, 17) + '.'.repeat(15) : row));
@@ -273,6 +302,14 @@ const FX = {
     .owwwo.
     ..owo..
     ...o...`),
+  drop: grid(`
+    ...o...
+    ..oqo..
+    .oqqqo.
+    oqqqqqo
+    oqqqwqo
+    oQqqqQo
+    .ooooo.`),
 };
 const padFx = g => P.pad(g, 9, 9, Math.floor((9 - P.W(g)) / 2), Math.floor((9 - P.H(g)) / 2));
 
@@ -285,6 +322,8 @@ const ANIMS = {
   surprised: { frames: surprisedFrames(), fps: 6 },
   groom: { frames: groomFrames(), fps: 5 },
   swipe: { frames: swipeFrames(), fps: 8 },
+  drink: { frames: drinkFrames(), fps: 4 },
+  holdGlass: { frames: holdGlassFrames(), fps: 3, loop: true },
   typing: { frames: typingFrames(), fps: 0 }, // driven by keystrokes
   dangle: { frames: dangleFrames(), fps: 6, loop: true },
   walk: { frames: walkFrames(), fps: 7, loop: true },

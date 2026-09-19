@@ -12,8 +12,12 @@ const LEFT_KEYS = new Set([1, 2, 3, 4, 5, 6, 15, 16, 17, 18, 19, 20, 29, 30, 31,
 const KEY_ENTER = 28, KEY_SPACE = 57;
 
 class Brain {
-  constructor({ displays, settings, onCloseTab, onBubbleAnswer, perch = () => null }) {
+  constructor({ displays, settings, onCloseTab, onBubbleAnswer, perch = () => null,
+    waterGate = () => 'show', onWaterNotify = () => {}, waterCount = () => 0 }) {
     this.perch = perch;                // () => { x0, x1, y } top edge of the active window, or null
+    this.waterGate = waterGate;        // () => 'show' | 'notify' (cat hidden: toast instead) | 'defer' (full screen)
+    this.onWaterNotify = onWaterNotify;
+    this.waterCount = waterCount;      // () => glasses logged today
     this.displays = displays;          // () => [{ bounds, workArea }]
     this.settings = settings;          // () => settings object
     this.onCloseTab = onCloseTab;      // (tabId, reason) => void
@@ -34,8 +38,11 @@ class Brain {
     this.clockGround = null;           // { dx } while the cat is playing with the clock on the floor
     this.alarmQueue = [];              // reminders that are due
     this.activeAlarm = null;           // the one currently ringing
+    this.waterDue = null;              // brain time (s) of the next water reminder; only active time counts
+    this.waterEvery = null;            // interval (min) the schedule was made with, to notice setting changes
+    this.waterMisses = 0;              // "not yet"/unanswered in a row (after a few, back to the normal interval)
     this.task = this.life();
-    this.mode = 'life';                // life | typing | mission | nudge | pet | away | menu | alarm | held
+    this.mode = 'life';                // life | typing | mission | nudge | pet | away | menu | alarm | held | water
   }
 
   // ---------- plumbing ----------
@@ -80,6 +87,8 @@ class Brain {
       this.interrupt(this.nudge(n), 'nudge');
     }
 
+    this.waterTick(userIdleSecs > awayAfter || this.mode === 'away');
+
     let r;
     try { r = this.task.next(); }
     catch (err) { // never let one broken behaviour freeze the cat: log it and go back to normal life
@@ -119,7 +128,7 @@ class Brain {
   }
 
   pet() {
-    if (this.mode === 'mission' || this.mode === 'nudge' || this.mode === 'menu' || this.mode === 'alarm') return;
+    if (['mission', 'nudge', 'menu', 'alarm', 'water'].includes(this.mode)) return;
     this.interrupt(this.petted(), 'pet');
   }
 
@@ -181,6 +190,77 @@ class Brain {
       yield* this.play(this.bubbleAnswer.answer === 'done' ? 'happy' : 'yawn', 1);
     }
   }
+  // ---------- water reminder ----------
+  // Every `waterEveryMinutes` of *active* time the cat drinks from her glass and asks if you had one.
+  // Time away from the desk doesn't count, and coming back gives at most one reminder, a bit later.
+  waterMinutes() { return Math.min(240, Math.max(5, Number(this.settings().waterEveryMinutes) || 30)); }
+  scheduleWater(minutes) { this.waterDue = this.t + minutes * 60; }
+  waterTick(away) {
+    const s = this.settings();
+    if (!s.waterEnabled) { this.waterDue = null; this.waterEvery = null; return; }
+    const every = this.waterMinutes();
+    if (this.waterDue == null || every !== this.waterEvery) { this.waterEvery = every; this.waterMisses = 0; this.scheduleWater(every); }
+    if (away) { this.waterDue = Math.max(this.waterDue + this.dt, this.t + 90); return; } // paused while away
+    if (this.t < this.waterDue || this.mode === 'water') return;
+    // Only at a calm moment: not while typing or just after, nor during missions, menus, alarms, being held.
+    const calm = this.mode === 'life' && this.t - this.lastKey > 8 && !this.ball && !this.bubble
+      && !this.pendingNudge && !this.activeAlarm && !this.alarmQueue.length && this.userIdleSecs < 60;
+    if (!calm) return;
+    const gate = this.waterGate();
+    if (gate === 'defer') { this.waterDue = this.t + 60; return; }
+    if (gate === 'notify') { this.scheduleWater(every); this.onWaterNotify(); return; }
+    this.interrupt(this.waterReminder(), 'water');
+  }
+  *waterReminder() {
+    const every = this.waterMinutes(), retry = Math.min(15, every);
+    this.scheduleWater(5); // fallback if something (a mission, an alarm, the menu) cuts this short
+    yield* this.dropDown();
+    this.addFx('drop', { life: 1.4 });
+    yield* this.play('drink');
+    const n = this.waterCount();
+    this.bubbleAnswer = null;
+    const b = {
+      kind: 'water', until: this.t + 31, // (until: cleared by the next behaviour if this one gets cut short)
+      text: this.waterMisses ? '💧 how about a sip of water now?' : '💧 had a glass of water?',
+      sub: n ? `${n} ${n === 1 ? 'glass' : 'glasses'} today` : 'stay hydrated 🐾',
+      buttons: [{ id: 'yes', label: 'yes, drank!' }, { id: 'notyet', label: 'not yet' }, { id: 'snooze', label: 'in 10 min' }],
+    };
+    this.bubble = b;
+    this.setAnim('holdGlass');
+    const end = this.t + 30;
+    while (!this.bubbleAnswer && this.bubble === b && this.t < end) yield;
+    const answer = this.bubbleAnswer && this.bubbleAnswer.b === b ? this.bubbleAnswer.answer : null;
+    if (this.bubble === b) this.bubble = null;
+    if (answer === 'yes') {
+      this.waterMisses = 0; this.scheduleWater(every);
+      yield* this.cheers();
+    } else if (answer === 'snooze') {
+      this.scheduleWater(10);
+      yield* this.play('blink');
+    } else { // "not yet" or no answer: ask again a bit sooner, but give up after a few tries
+      this.waterMisses++;
+      if (this.waterMisses >= 3) { this.waterMisses = 0; this.scheduleWater(every); } else this.scheduleWater(retry);
+      if (answer) this.say('okay, soon! 💧', 2);
+      yield* this.play('idle', 0.6);
+    }
+  }
+  *cheers() {
+    const n = this.waterCount();
+    this.setAnim('happy');
+    this.say(n ? `yay! ${n} ${n === 1 ? 'glass' : 'glasses'} today 💧` : 'yay! 💧', 2.5);
+    for (let i = 0; i < 3; i++) { this.addFx(i === 1 ? 'heart' : 'drop', { dx: rand(-14, 14), life: 1.4 }); yield* this.wait(0.35); }
+    yield* this.wait(0.8);
+  }
+  // "Drink water now" from the menu (the glass is logged by main): drink along, then celebrate.
+  drinkNow() {
+    if (this.mode === 'mission' || this.mode === 'held' || this.mode === 'alarm') return;
+    this.bubble = null;
+    this.waterMisses = 0;
+    if (this.settings().waterEnabled) this.scheduleWater(this.waterMinutes());
+    const self = this;
+    this.interrupt((function* () { yield* self.dropDown(); yield* self.play('drink'); yield* self.cheers(); })(), 'life');
+  }
+
   // With a timer running, now and then the clock hops down and gets batted around.
   *clockPlay() {
     if (this.countdown == null) return;
