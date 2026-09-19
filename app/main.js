@@ -7,7 +7,7 @@ const settings = require('./settings');
 const reminders = require('./reminders');
 const { Brain } = require('./brain');
 const { Bridge } = require('./bridge');
-const { fullscreenMonitor, foregroundWindow, mouseButtonDown } = require('./win32');
+const { fullscreenMonitor, foregroundWindow, mouseButtonDown, cursorInWindow } = require('./win32');
 
 const WIN_W = 300, WIN_H = 340; // cat window (DIP): room for the cat, ball and a bubble/menu above
 const ICON = path.join(__dirname, '..', 'assets', 'icon.ico');
@@ -300,14 +300,30 @@ function loop() {
 // position (reliable across mixed-DPI monitors) against hit boxes the renderer reports.
 let hitboxes = { cat: null, bubble: null }, clickable = false;
 const inside = (p, r) => r && p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h;
+let hwnd = null, lastMissLog = 0;
 function updateClickable(b) {
-  const c = screen.getCursorScreenPoint();
-  const p = { x: c.x - b.x, y: c.y - b.y };
+  // Prefer the physical-pixel measurement from Windows; fall back to Electron's DIP maths.
+  hwnd = hwnd || win.getNativeWindowHandle();
+  let p = cursorInWindow(hwnd);
+  if (!p) { const c = screen.getCursorScreenPoint(); p = { x: c.x - b.x, y: c.y - b.y, inside: true }; }
+  if (process.env.WB_PROBE && p.inside && Date.now() % 1000 < 40) {
+    const c = screen.getCursorScreenPoint(), wb = win.getBounds();
+    log('probe physical', Math.round(p.x), Math.round(p.y), '| electron-dip', c.x - b.x, c.y - b.y, '| getBounds-vs-intended', JSON.stringify(wb), JSON.stringify(b));
+  }
   const want = brain.mode === 'held' || !!inside(p, hitboxes.bubble) || !!inside(p, hitboxes.cat);
   if (process.env.WB_PROBE && hitboxes.bubble && Date.now() % 1000 < 40) log('probe p', JSON.stringify(p), 'bubble', JSON.stringify(hitboxes.bubble), 'win', JSON.stringify(b));
   // Clicking anywhere else closes an open menu / form, like a normal popup.
   const k = brain.bubble?.kind;
   if ((k === 'menu' || k === 'form') && !want && mouseButtonDown()) brain.closeBubble();
+  // Diagnostics: a click inside our window that we treated as click-through. Logged (throttled) with
+  // the numbers needed to see why, in case hit-testing ever goes wrong again.
+  if (!want && p.inside && (hitboxes.cat || hitboxes.bubble) && mouseButtonDown() && Date.now() - lastMissLog > 5000) {
+    const near = r => r && p.x > r.x - 40 && p.x < r.x + r.w + 40 && p.y > r.y - 40 && p.y < r.y + r.h + 40;
+    if (near(hitboxes.cat) || near(hitboxes.bubble)) {
+      lastMissLog = Date.now();
+      log('missed click near cat', JSON.stringify({ p: { x: Math.round(p.x), y: Math.round(p.y) }, cat: hitboxes.cat, bubble: hitboxes.bubble, win: b }));
+    }
+  }
   if (want !== clickable) {
     clickable = want; win.setIgnoreMouseEvents(!want, { forward: true });
     if (process.env.WB_PROBE) log('clickable', want);
@@ -441,8 +457,10 @@ app.whenReady().then(() => {
   }, 1500);
 
   // Dev: WB_DEMO=<behaviour> starts a specific behaviour, e.g. WB_DEMO=visitMonitor.
-  if (process.env.WB_DEMO && typeof brain[process.env.WB_DEMO] === 'function') {
-    setTimeout(() => brain.interrupt(brain.grounded(brain[process.env.WB_DEMO]()), 'life'), 1500);
+  // Several can be chained: WB_DEMO=visitMonitor,visitMonitor
+  if (process.env.WB_DEMO) {
+    const names = process.env.WB_DEMO.split(',').filter(n => typeof brain[n] === 'function');
+    if (names.length) setTimeout(() => brain.interrupt((function* () { for (const n of names) yield* brain.grounded(brain[n]()); })(), 'life'), 1500);
   }
 
   timers.push(setInterval(loop, 33), setInterval(checkFullscreen, 1500), setInterval(() => alive() && refreshTray(), 60e3));

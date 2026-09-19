@@ -3,6 +3,7 @@
 let check = () => null;
 let foreground = () => null;
 let leftDown = () => null;  // null = unknown (renderer's pointerup is used instead)
+let cursorInWindow = () => null; // { x, y } window-local DIP from real physical pixels, or null if unavailable
 
 try {
   const koffi = require('koffi');
@@ -55,6 +56,20 @@ try {
     const vk = GetSystemMetrics(23 /* SM_SWAPBUTTON */) ? 0x02 : 0x01;
     return (GetAsyncKeyState(vk) & 0x8000) !== 0;
   };
+
+  // Where the cursor is relative to our window, computed entirely from physical pixels and the
+  // window's own DPI. Avoids Electron's DIP mapping, which can drift on mixed-DPI multi-monitor setups.
+  const POINT = koffi.struct('POINT', { x: 'long', y: 'long' });
+  const GetCursorPos = user32.func('bool __stdcall GetCursorPos(_Out_ POINT *p)');
+  const GetWindowRectH = user32.func('bool __stdcall GetWindowRect(intptr hWnd, _Out_ RECT *rect)');
+  const GetDpiForWindow = user32.func('uint32 __stdcall GetDpiForWindow(intptr hWnd)');
+  cursorInWindow = (hwndBuf) => {
+    const hwnd = hwndBuf.length >= 8 ? hwndBuf.readBigUInt64LE(0) : BigInt(hwndBuf.readUInt32LE(0));
+    const p = {}, r = {};
+    if (!GetCursorPos(p) || !GetWindowRectH(hwnd, r)) return null;
+    const scale = (GetDpiForWindow(hwnd) || 96) / 96;
+    return { x: (p.x - r.left) / scale, y: (p.y - r.top) / scale, inside: p.x >= r.left && p.x < r.right && p.y >= r.top && p.y < r.bottom };
+  };
 } catch (err) {
   console.warn('[workbuddy] full-screen detection unavailable:', err.message);
 }
@@ -63,4 +78,5 @@ module.exports = {
   fullscreenMonitor: () => { try { return check(); } catch { return null; } },
   foregroundWindow: () => { try { return foreground(); } catch { return null; } },
   mouseButtonDown: () => { try { return leftDown(); } catch { return null; } },
+  cursorInWindow: (hwndBuf) => { try { return cursorInWindow(hwndBuf); } catch { return null; } },
 };
