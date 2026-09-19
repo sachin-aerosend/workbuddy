@@ -28,6 +28,13 @@ function log(...parts) {
 }
 
 let win, tray, brain, bridge;
+let quitting = false;
+const timers = [];
+const alive = () => !quitting && win && !win.isDestroyed();
+
+// Unexpected errors go to the log instead of a crash dialog popping up mid-call.
+process.on('uncaughtException', err => log('uncaught:', String(err && err.stack || err).split('\n').slice(0, 4).join(' | ')));
+process.on('unhandledRejection', err => log('unhandled rejection:', String(err && err.stack || err).split('\n').slice(0, 4).join(' | ')));
 let pausedUntil = 0, hidden = false, fullscreenHide = false, browserConnected = false;
 let lastBounds = '', lastState = '', focusable = false;
 
@@ -51,6 +58,9 @@ function createWindow() {
   win.webContents.on('unresponsive', () => { log('renderer unresponsive'); reviveRenderer('unresponsive'); });
   win.webContents.on('did-finish-load', () => { lastBeat = Date.now(); lastState = ''; lastBounds = ''; });
   win.once('ready-to-show', () => win.showInactive());
+  // Something closed the cat's window (an installer/updater, Windows shutting down, Alt+F4):
+  // exit cleanly instead of running on without a window.
+  win.on('close', () => { if (!quitting) { log('cat window closed from outside: quitting'); quitting = true; app.quit(); } });
 }
 
 // Screen-share visibility: hidden from shares/recordings unless the user turns it off.
@@ -77,7 +87,7 @@ function reviveRenderer(why) {
 }
 // Renderer heartbeat: if the page goes silent while the cat should be showing, reload it.
 function watchdog() {
-  if (win && win.isVisible() && Date.now() - lastBeat > 8000) reviveRenderer('no heartbeat');
+  if (alive() && win.isVisible() && Date.now() - lastBeat > 8000) reviveRenderer('no heartbeat');
 }
 
 // Bring the cat to the screen the mouse is on (used when relaunched and when an alarm rings).
@@ -243,6 +253,7 @@ function onBridgeMessage(msg, ws) {
 // ---------- main loop ----------
 let lastTick = Date.now();
 function loop() {
+  if (!alive()) return;
   const now = Date.now();
   const dt = (now - lastTick) / 1000;
   lastTick = now;
@@ -367,7 +378,7 @@ function applyLogin() {
 app.whenReady().then(() => {
   createWindow();
   brain = new Brain({ displays, settings: settings.get, onCloseTab, onBubbleAnswer, perch: () => perchCache });
-  setInterval(updatePerch, 500);
+  timers.push(setInterval(updatePerch, 500));
   brain.onError = err => log('behaviour crashed:', String(err && err.stack || err).split('\n').slice(0, 3).join(' | '));
 
   bridge = new Bridge(settings.get().bridgePort);
@@ -381,7 +392,7 @@ app.whenReady().then(() => {
   ipcMain.on('beat', () => { lastBeat = Date.now(); });
   // Opening WorkBuddy while it's already running brings the cat back to you.
   app.on('second-instance', () => { log('second launch: summoning cat'); summonCat('here I am! 🐾'); });
-  setInterval(watchdog, 2000);
+  timers.push(setInterval(watchdog, 2000));
   // Dev: WB_CRASHTEST=1 crashes the renderer after 6 s to prove it recovers.
   if (process.env.WB_CRASHTEST) setTimeout(() => { log('crash test: killing renderer'); win.webContents.forcefullyCrashRenderer(); }, 6000);
   ipcMain.on('log', (_e, msg) => log('renderer:', String(msg).slice(0, 200)));
@@ -434,10 +445,12 @@ app.whenReady().then(() => {
     setTimeout(() => brain.interrupt(brain.grounded(brain[process.env.WB_DEMO]()), 'life'), 1500);
   }
 
-  setInterval(loop, 33);
-  setInterval(checkFullscreen, 1500);
-  setInterval(refreshTray, 60e3);
+  timers.push(setInterval(loop, 33), setInterval(checkFullscreen, 1500), setInterval(() => alive() && refreshTray(), 60e3));
 });
 
 app.on('window-all-closed', e => e.preventDefault());
-app.on('before-quit', () => bridge && bridge.close());
+app.on('before-quit', () => {
+  quitting = true;
+  timers.forEach(clearInterval);
+  if (bridge) bridge.close();
+});
