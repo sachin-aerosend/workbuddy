@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const SITE = 'https://workbuddycat.vercel.app';
+const SITE = 'https://www.workbuddycat.online';
 const DOWNLOAD = 'https://github.com/sachin-aerosend/workbuddy/releases/latest/download/WorkBuddy-Setup.exe';
 const WEB = path.join(__dirname, '..', 'website');
 const SRC = path.join(WEB, 'blog-src');

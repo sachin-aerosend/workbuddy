@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://workbuddycat.vercel.app/sitemap.xml
+Sitemap: https://www.workbuddycat.online/sitemap.xml
