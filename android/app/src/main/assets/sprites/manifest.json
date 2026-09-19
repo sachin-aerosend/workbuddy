@@ -1,0 +1,112 @@
+{
+  "frameW": 32,
+  "frameH": 32,
+  "anims": {
+    "idle": {
+      "frames": 10,
+      "fps": 8,
+      "loop": true
+    },
+    "blink": {
+      "frames": 5,
+      "fps": 8,
+      "loop": false
+    },
+    "yawn": {
+      "frames": 5,
+      "fps": 5,
+      "loop": false
+    },
+    "happy": {
+      "frames": 4,
+      "fps": 6,
+      "loop": false
+    },
+    "surprised": {
+      "frames": 2,
+      "fps": 6,
+      "loop": false
+    },
+    "groom": {
+      "frames": 6,
+      "fps": 5,
+      "loop": false
+    },
+    "swipe": {
+      "frames": 6,
+      "fps": 8,
+      "loop": false
+    },
+    "typing": {
+      "frames": 4,
+      "fps": 0,
+      "loop": false
+    },
+    "dangle": {
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "frames": 4,
+      "fps": 7,
+      "loop": true
+    },
+    "run": {
+      "frames": 4,
+      "fps": 12,
+      "loop": true
+    },
+    "pounce": {
+      "frames": 7,
+      "fps": 8,
+      "loop": false
+    },
+    "stretch": {
+      "frames": 4,
+      "fps": 3,
+      "loop": false
+    },
+    "loaf": {
+      "frames": 4,
+      "fps": 2,
+      "loop": true
+    },
+    "sleep": {
+      "frames": 4,
+      "fps": 2,
+      "loop": true
+    },
+    "roll": {
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    "box": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    },
+    "dracula": {
+      "frames": 6,
+      "fps": 6,
+      "loop": true
+    }
+  },
+  "fx": {
+    "heart": 0,
+    "z": 1,
+    "bang": 2,
+    "question": 3,
+    "sparkle": 4
+  },
+  "ball": {
+    "w": 9,
+    "h": 9
+  },
+  "clock": {
+    "w": 15,
+    "h": 15,
+    "frames": 4
+  }
+}

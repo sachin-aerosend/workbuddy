@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WorkBuddy</string>
+    <string name="watcher_label">WorkBuddy cat</string>
+    <string name="watcher_description">Lets your WorkBuddy cat swat away Instagram Reels, YouTube Shorts, Facebook Reels and TikTok by pressing Back for you, suggest breaks after a while in distracting apps, and tap her tiny keyboard while you type. It only checks which app and screen is open and that you are typing, never what you type. Nothing is stored or sent anywhere.</string>
+    <string name="ch_cat">Cat on screen</string>
+    <string name="ch_remind">Reminders</string>
+    <string name="focus_done">Focus session done! Stretch and take 5 🐾</string>
+    <string name="times_up">Time’s up!</string>
+</resources>
