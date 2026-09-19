@@ -387,6 +387,73 @@ main > section { padding: 0 clamp(16px, 4vw, 48px); max-width: 1180px; margin: 0
 .qa details[open] summary::after { transform: rotate(45deg); }
 .qa details p { padding: 0 0 18px; color: var(--ink-2); }
 
+/* ---------- community ---------- */
+.community { padding-top: 110px !important; max-width: 860px !important; }
+.composer { padding: 18px 20px; display: grid; gap: 12px; }
+.composer-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.avatar {
+  flex: none; border-radius: 12px; border: 2.5px solid var(--line); background: var(--paper);
+  image-rendering: pixelated; padding: 3px;
+}
+.composer input, .composer textarea, .reply-form input, .reply-form textarea {
+  font: 600 15.5px var(--font-body); color: var(--ink); background: var(--cream);
+  border: 2.5px solid var(--line); border-radius: 12px; padding: 9px 12px; width: 100%;
+  transition: box-shadow .15s, background .15s;
+}
+.composer input:focus, .composer textarea:focus, .reply-form input:focus, .reply-form textarea:focus {
+  outline: none; background: #fff; box-shadow: 3px 3px 0 var(--stripe);
+}
+#c-name { flex: 1 1 160px; width: auto; min-width: 0; }
+.composer textarea, .reply-form textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+.kind { display: flex; gap: 6px; }
+.kind input { position: absolute; opacity: 0; pointer-events: none; }
+.kind span {
+  display: inline-block; font: 800 13.5px var(--font-body); padding: 6px 12px; cursor: pointer;
+  border: 2.5px solid var(--line); border-radius: 999px; background: #fff; transition: background .15s, transform .1s;
+}
+.kind input:checked + span { background: var(--fur); box-shadow: 2px 2px 0 var(--line); transform: translate(-1px, -1px); }
+.kind input:focus-visible + span { outline: 3px solid var(--stripe); outline-offset: 2px; }
+.hp { position: absolute !important; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.composer-bottom { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
+.status { font-size: 14px; color: var(--muted); margin-right: auto; }
+.status.error { color: #c0392b; font-weight: 700; }
+.status.ok { color: #2f8f4e; font-weight: 700; }
+.btn[disabled] { opacity: .6; pointer-events: none; }
+
+.threads { display: grid; gap: 18px; margin-top: 28px; }
+.threads-empty { text-align: center; color: var(--muted); padding: 20px; }
+.thread { padding: 18px 20px 14px; box-shadow: var(--shadow); }
+.comment { display: flex; gap: 12px; align-items: flex-start; }
+.comment-body { min-width: 0; flex: 1; }
+.meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 3px; }
+.who { font-weight: 800; }
+.when { font-size: 13px; color: var(--muted); }
+.text { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink-2); font-size: 15.5px; }
+.badge {
+  font: 700 11.5px var(--font-pixel); text-transform: uppercase; letter-spacing: .6px;
+  padding: 1px 8px; border-radius: 999px; border: 2px solid var(--line); background: #fff;
+}
+.badge-maker { background: var(--fur); }
+.badge-team { background: var(--mint); }
+.badge-faq { background: var(--sky); }
+.badge-help { background: var(--sun); }
+.badge-pin { background: var(--blush-soft); }
+.role-maker .who, .role-team .who { color: var(--stripe); }
+.role-faq .who { color: var(--muted); font-style: italic; }
+.replies { margin: 12px 0 0 20px; padding-left: 18px; border-left: 3px dotted rgba(42, 35, 32, .28); display: grid; gap: 14px; }
+.replies:empty { display: none; }
+.reply .text { font-size: 15px; }
+.reply-btn {
+  margin: 10px 0 0 52px; font: 800 13.5px var(--font-body); color: var(--stripe);
+  background: none; border: 0; padding: 2px 0; cursor: pointer;
+}
+.reply-btn:hover { text-decoration: underline; }
+.reply-form { display: grid; gap: 8px; margin: 12px 0 2px 52px; }
+@media (max-width: 560px) {
+  .replies { margin-left: 6px; padding-left: 12px; }
+  .reply-btn, .reply-form { margin-left: 0; }
+}
+
 /* ---------- download ---------- */
 .download { padding-bottom: 110px !important; }
 .download-card {

@@ -27,6 +27,7 @@
     <a href="#features">What it does</a>
     <a href="#how">How it works</a>
     <a href="#faq">FAQ</a>
+    <a href="#community">Community</a>
   </nav>
   <a class="btn btn-small" href="#download" data-download>Download</a>
 </header>
@@ -222,6 +223,36 @@
     </div>
   </section>
 
+  <!-- ============ COMMUNITY ============ -->
+  <section class="community" id="community">
+    <div class="section-head">
+      <p class="eyebrow">Feedback &amp; help</p>
+      <h2>Talk to the cat people</h2>
+      <p class="sub">Say hi, suggest a new trick, or ask for help. No account needed, just pick a name.</p>
+    </div>
+
+    <form class="card composer" id="composer" autocomplete="off">
+      <div class="composer-top">
+        <img class="avatar" id="composer-avatar" src="assets/icon.png" alt="" width="40" height="40">
+        <input id="c-name" name="name" maxlength="24" placeholder="Your name" aria-label="Your name" required>
+        <div class="kind" role="radiogroup" aria-label="Type of post">
+          <label><input type="radio" name="kind" value="feedback" checked><span>💬 Feedback</span></label>
+          <label><input type="radio" name="kind" value="help"><span>🙋 Need help</span></label>
+        </div>
+      </div>
+      <textarea id="c-text" name="text" rows="3" maxlength="800" placeholder="What's on your mind?" aria-label="Your comment" required></textarea>
+      <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="composer-bottom">
+        <span class="status" id="c-status" role="status"></span>
+        <button class="btn btn-small" type="submit">Post</button>
+      </div>
+    </form>
+
+    <div class="threads" id="threads" aria-live="polite">
+      <p class="threads-empty">Loading comments…</p>
+    </div>
+  </section>
+
   <!-- ============ DOWNLOAD ============ -->
   <section class="download" id="download">
     <div class="card download-card">
@@ -270,5 +301,6 @@
 </footer>
 
 <script src="main.js"></script>
+<script src="comments.js"></script>
 </body>
 </html>
