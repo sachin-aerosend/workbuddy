@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "workbuddy-ashen.vercel.app" }],
+      "destination": "https://workbuddycat.vercel.app/:path*",
+      "permanent": true
+    }
+  ]
+}

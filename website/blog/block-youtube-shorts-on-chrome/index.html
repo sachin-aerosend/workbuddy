@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to Block YouTube Shorts on Chrome (and Keep Regular YouTube) | WorkBuddy</title>
+<meta name="description" content="You need YouTube for tutorials and talks, not an endless Shorts feed. Here are the ways to hide or block Shorts on desktop Chrome, and the catch most guides miss.">
+<link rel="canonical" href="https://workbuddycat.vercel.app/blog/block-youtube-shorts-on-chrome/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to Block YouTube Shorts on Chrome (and Keep Regular YouTube) | WorkBuddy">
+<meta property="og:description" content="You need YouTube for tutorials and talks, not an endless Shorts feed. Here are the ways to hide or block Shorts on desktop Chrome, and the catch most guides miss.">
+<meta property="og:url" content="https://workbuddycat.vercel.app/blog/block-youtube-shorts-on-chrome/">
+<meta property="og:image" content="https://workbuddycat.vercel.app/assets/og.png">
+<meta property="og:site_name" content="WorkBuddy">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#fffaf2">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="alternate" type="application/rss+xml" title="WorkBuddy blog" href="https://workbuddycat.vercel.app/blog/feed.xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/blog.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"How to Block YouTube Shorts on Chrome (and Keep Regular YouTube)","description":"You need YouTube for tutorials and talks, not an endless Shorts feed. Here are the ways to hide or block Shorts on desktop Chrome, and the catch most guides miss.","datePublished":"2026-09-19","dateModified":"2026-09-19","author":{"@type":"Person","name":"Sachin Sahani"},"publisher":{"@type":"Organization","name":"WorkBuddy","logo":{"@type":"ImageObject","url":"https://workbuddycat.vercel.app/assets/icon.png"}},"image":"https://workbuddycat.vercel.app/assets/og.png","mainEntityOfPage":"https://workbuddycat.vercel.app/blog/block-youtube-shorts-on-chrome/","keywords":"block youtube shorts, hide youtube shorts chrome, disable shorts desktop, remove shorts from youtube"}</script>
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="/" aria-label="WorkBuddy home"><img src="/assets/icon.png" alt="" width="36" height="36"><span>WorkBuddy</span></a>
+  <nav class="nav-links" aria-label="Main">
+    <a href="/#features">What it does</a>
+    <a href="/blog/">Blog</a>
+    <a href="/#community">Community</a>
+  </nav>
+  <a class="btn btn-small" href="https://github.com/sachin-aerosend/workbuddy/releases/latest/download/WorkBuddy-Setup.exe">Download</a>
+</header>
+<main class="blog-main">
+
+<article class="post">
+  <header class="post-head">
+    <a class="back" href="/blog/">← All posts</a>
+    <p class="eyebrow">Browser tips</p>
+    <h1>How to Block YouTube Shorts on Chrome (and Keep Regular YouTube)</h1>
+    <p class="post-meta">By Sachin Sahani · <time datetime="2026-09-19">19 September 2026</time> · 2 min read</p>
+    <div class="post-hero"><div class="sprite big" data-anim="pounce"></div></div>
+    <p class="post-lede">You need YouTube for tutorials and talks, not an endless Shorts feed. Here are the ways to hide or block Shorts on desktop Chrome, and the catch most guides miss.</p>
+  </header>
+  <nav class="toc card" aria-label="In this post"><b>In this post</b><ol><li><a href="#option-1-tell-youtube-you-re-not-interested">Option 1: Tell YouTube you're not interested</a></li><li><a href="#option-2-hide-shorts-with-a-content-blocking-extension">Option 2: Hide Shorts with a content-blocking extension</a></li><li><a href="#option-3-block-the-shorts-pages-themselves">Option 3: Block the Shorts pages themselves</a></li><li><a href="#option-4-make-youtube-a-search-only-site">Option 4: Make YouTube a &quot;search only&quot; site</a></li><li><a href="#what-about-the-mobile-app">What about the mobile app?</a></li><li><a href="#which-should-you-choose">Which should you choose?</a></li></ol></nav>
+  <div class="post-body">
+<p>YouTube is genuinely useful for work: product demos, conference talks, &quot;how do I do X in Excel&quot;. Shorts is the part that turns a five-minute tutorial into an hour of vertical videos.</p>
+<p>There's no official &quot;turn Shorts off&quot; switch on desktop YouTube, but you have good options. Here they are, from lightest to strongest.</p>
+<h2 id="option-1-tell-youtube-you-re-not-interested">Option 1: Tell YouTube you're not interested</h2>
+<p>On the YouTube homepage, the Shorts shelf has a menu (the ⋮ or ✕ on the shelf). Choosing to show fewer Shorts hides the shelf for a while.</p>
+<ul><li><strong>Good:</strong> built in, nothing to install.</li><li><strong>Not so good:</strong> it tends to come back after some time, and it doesn't stop you opening a Short from search or a link.</li></ul>
+<h2 id="option-2-hide-shorts-with-a-content-blocking-extension">Option 2: Hide Shorts with a content-blocking extension</h2>
+<p>Ad-blocking extensions like <strong>uBlock Origin</strong> let you add your own &quot;cosmetic filters&quot; that hide parts of a page. The community shares filters that hide the Shorts shelf and the Shorts button in the sidebar. They usually target YouTube's page elements, for example:</p>
+<ul><li><code>youtube.com##ytd-reel-shelf-renderer</code></li><li><code>youtube.com##ytd-rich-shelf-renderer[is-shorts]</code></li></ul>
+<p>You add them under the extension's <strong>My filters</strong> tab.</p>
+<ul><li><strong>Good:</strong> very effective at removing Shorts from what you see.</li><li><strong>Not so good:</strong> YouTube changes its page structure from time to time, so filters sometimes need updating.</li></ul>
+<aside class="tip"><span class="tip-cat" aria-hidden="true"></span><p>Hiding the Shorts <em>shelf</em> removes the temptation. Blocking the Shorts <em>pages</em> removes the escape hatch. For best results, do both.</p></aside>
+<h2 id="option-3-block-the-shorts-pages-themselves">Option 3: Block the Shorts pages themselves</h2>
+<p>Every Short lives at an address starting with <code>youtube.com/shorts/</code>. Blocking that path stops Shorts from playing even if you click a link to one, while normal videos (<code>youtube.com/watch?v=…</code>) keep working.</p>
+<p><strong>The catch most guides miss:</strong> YouTube is a single-page app. When you click a Short from inside YouTube, the page doesn't fully reload; the address just changes. Many URL blockers only check when a page <em>loads</em>, so they catch a Shorts link opened in a new tab but miss the one you clicked on the homepage. If you pick a blocker, check that it reacts to in-page navigation too.</p>
+<h2 id="option-4-make-youtube-a-search-only-site">Option 4: Make YouTube a &quot;search only&quot; site</h2>
+<p>A behavioural trick that works surprisingly well:</p>
+<ul><li>Bookmark <code>youtube.com/results</code> or use your browser's address bar to search YouTube directly.</li><li>Avoid the homepage, where recommendations and Shorts live.</li><li>Turn off watch history if you don't want a personalised feed at all (<strong>You → History → Pause watch history</strong>). With history paused, the homepage becomes much less sticky.</li></ul>
+<h2 id="what-about-the-mobile-app">What about the mobile app?</h2>
+<p>This guide is about desktop Chrome. On phones, your options are your platform's app limits (<strong>Digital Wellbeing</strong> on Android, <strong>Screen Time</strong> on iPhone) or using YouTube in the mobile browser, which you can block paths in more easily.</p>
+<div class="cta-box">
+  <div class="sprite" data-anim="swipe"></div>
+  <div>
+    <h3>Let a tiny cat handle it</h3>
+    <p>WorkBuddy is a free pixel cat for your Windows taskbar. It closes Reels and Shorts tabs, nudges you about forgotten tabs, and keeps you company while you work.</p>
+    <a class="btn btn-small" href="https://github.com/sachin-aerosend/workbuddy/releases/latest/download/WorkBuddy-Setup.exe">Download for Windows</a> <a class="text-link" href="/">See how it works →</a>
+  </div>
+</div>
+<h2 id="which-should-you-choose">Which should you choose?</h2>
+<ul><li><strong>Just want the shelf gone?</strong> Option 2.</li><li><strong>Keep clicking Shorts from links or search?</strong> Option 3, with a blocker that catches in-page navigation.</li><li><strong>Want the habit gone for good?</strong> Option 4 plus any of the above.</li></ul>
+<p>I built WorkBuddy partly because of that single-page-app catch: its browser extension watches for address changes, so the cat catches a Short however you got there, then closes the tab and leaves the rest of YouTube alone.</p>
+  </div>
+</article>
+<section class="related">
+  <h2>Keep reading</h2>
+  <div class="post-grid"><a class="post-card card" href="/blog/desktop-pets-for-windows/">
+  <div class="post-card-art"><div class="sprite" data-anim="walk"></div></div>
+  <span class="eyebrow">Desktop pets</span>
+  <h3>Cute Desktop Pets for Windows 11 (and What Each One Is Good For)</h3>
+  <p>Desktop pets are back. Here's a friendly tour of the best-known ones for Windows, from chaotic geese to typing cats, and how to pick one that won't get in your way.</p>
+  <span class="post-card-meta">3 min read</span>
+</a><a class="post-card card" href="/blog/close-unused-tabs-automatically/">
+  <div class="post-card-art"><div class="sprite" data-anim="groom"></div></div>
+  <span class="eyebrow">Browser tips</span>
+  <h3>How to Close Unused Tabs Automatically in Chrome</h3>
+  <p>Forgotten tabs slow you down and clutter your head. Here's how to get Chrome to deal with them automatically, using built-in settings and a few extensions.</p>
+  <span class="post-card-meta">2 min read</span>
+</a><a class="post-card card" href="/blog/pomodoro-technique-guide/">
+  <div class="post-card-art"><div class="sprite" data-anim="typing"></div></div>
+  <span class="eyebrow">Focus</span>
+  <h3>The Pomodoro Technique, Simply Explained (and How to Actually Stick With It)</h3>
+  <p>25 minutes of focus, 5 minutes of rest. Here's how the Pomodoro Technique works, why it helps, and the small tweaks that make it stick past day three.</p>
+  <span class="post-card-meta">2 min read</span>
+</a></div>
+</section>
+</main>
+<footer class="foot">
+  <div class="foot-inner">
+    <a class="brand" href="/"><img src="/assets/icon.png" alt="" width="28" height="28"><span>WorkBuddy</span></a>
+    <p><a href="/blog/">Blog</a> · <a href="/#faq">FAQ</a> · <a href="https://github.com/sachin-aerosend/workbuddy">GitHub</a> · Made with 🧡 and a lot of tiny pixels.</p>
+  </div>
+</footer>
+<script src="/blog.js"></script>
+</body>
+</html>
