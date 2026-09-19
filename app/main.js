@@ -42,8 +42,7 @@ function createWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, backgroundThrottling: false },
   });
   win.setAlwaysOnTop(true, 'screen-saver');   // above the taskbar
-  // Invisible in screen shares and recordings (WB_CAPTURE=1 turns this off for screenshots while developing).
-  if (!process.env.WB_CAPTURE) win.setContentProtection(true);
+  applyScreenShare();
   win.setIgnoreMouseEvents(true, { forward: true });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.webContents.on('console-message', (e) => { if (e.level === 'error' || e.level === 'warning') log('renderer console:', e.level, String(e.message).slice(0, 300)); });
@@ -52,6 +51,20 @@ function createWindow() {
   win.webContents.on('unresponsive', () => { log('renderer unresponsive'); reviveRenderer('unresponsive'); });
   win.webContents.on('did-finish-load', () => { lastBeat = Date.now(); lastState = ''; lastBounds = ''; });
   win.once('ready-to-show', () => win.showInactive());
+}
+
+// Screen-share visibility: hidden from shares/recordings unless the user turns it off.
+// (WB_CAPTURE=1 always shows it, for screenshots while developing.)
+function applyScreenShare() {
+  if (win && !win.isDestroyed()) win.setContentProtection(!process.env.WB_CAPTURE && settings.get().hideFromScreenShare !== false);
+}
+function toggleScreenShare() {
+  const hide = settings.get().hideFromScreenShare === false; // flip
+  settings.save({ hideFromScreenShare: hide });
+  applyScreenShare();
+  log('screen share', hide ? 'hidden' : 'visible');
+  brain.say(hide ? 'hidden from screen share again 🙈' : 'people on your call can see me now 📺', 2.8);
+  refreshTray();
 }
 
 let lastBeat = Date.now(), lastRevive = 0;
@@ -127,7 +140,10 @@ function openCatMenu() {
     { id: 'ball', label: '🧶 Play with the ball' },
     { id: 'patrol', label: '🐾 Walk on my tabs' },
     { id: 'nap', label: '😴 Nap time' },
-    { id: 'away', label: '🙈 Hide for 1 hour' },
+    settings.get().hideFromScreenShare === false
+      ? { id: 'share', label: '🙈 Hide me from screen share' }
+      : { id: 'share', label: '📺 Show me on screen share' },
+    { id: 'away', label: '💤 Hide for 1 hour' },
   ];
   brain.openMenu(items);
 }
@@ -157,6 +173,7 @@ function onMenuChoice(id) {
   if (id === 'ball') return brain.interrupt(brain.grounded(brain.ballPlay()), 'life');
   if (id === 'patrol') return brain.interrupt(brain.grounded(brain.tabPatrol()), 'life');
   if (id === 'nap') return brain.interrupt(brain.nap(60), 'life');
+  if (id === 'share') return toggleScreenShare();
   if (id === 'away') { pausedUntil = Date.now() + 3600e3; refreshTray(); }
 }
 
@@ -315,6 +332,7 @@ function refreshTray() {
     { label: 'Nap time', click: () => brain.interrupt(brain.nap(60), 'life') },
     { label: 'Zoomies!', click: () => brain.interrupt(brain.grounded(brain.zoomies()), 'life') },
     { type: 'separator' },
+    { label: 'Hide from screen share', type: 'checkbox', checked: s.hideFromScreenShare !== false, click: () => toggleScreenShare() },
     { label: 'Typing buddy', type: 'checkbox', checked: s.typingBuddy, click: m => { settings.save({ typingBuddy: m.checked }); } },
     { label: 'Start with Windows', type: 'checkbox', checked: s.startWithWindows, click: m => { settings.save({ startWithWindows: m.checked }); applyLogin(); } },
     { label: 'Edit settings (blocked sites, timings)…', click: () => { settings.ensureFile(); shell.openPath(settings.path()); } },
@@ -386,7 +404,7 @@ app.whenReady().then(() => {
   refreshTray();
   applyLogin();
 
-  fs.watchFile(settings.path(), { interval: 2000 }, () => { settings.reload(); sendConfig(); refreshTray(); });
+  fs.watchFile(settings.path(), { interval: 2000 }, () => { settings.reload(); sendConfig(); applyScreenShare(); refreshTray(); });
   screen.on('display-removed', () => { brain.x = brain.clampX(brain.x); });
 
   // Dev: WB_PROBE=1 logs where the bubble's first button is on screen (physical px) for click tests.

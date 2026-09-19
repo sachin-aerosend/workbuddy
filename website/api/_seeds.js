@@ -21,7 +21,7 @@ export const SEEDS = [
   { id: 'faq-in-the-way', role: 'faq', name: 'Common question', kind: 'help', at: AT,
     text: 'The cat strolled across my tabs during a call. Can people see it, and can I make it stay put?' },
   { id: 'faq-in-the-way-a', role: 'team', name: 'WorkBuddy team', parentId: 'faq-in-the-way', at: AT,
-    text: "Nobody else sees it. It's hidden from screen shares and recordings. If it's in your way, drag it somewhere else, or right-click the tray icon → “Send cat away for 1 hour”. It also steps aside on its own when an app goes full-screen." },
+    text: "Nobody else sees it: it's hidden from screen shares and recordings by default (right-click the cat → “Show me on screen share” if you ever want to show it off). If it's in your way, drag it somewhere else, or right-click the tray icon → “Send cat away for 1 hour”. It also steps aside on its own when an app goes full-screen." },
 
   { id: 'faq-smartscreen', role: 'faq', name: 'Common question', kind: 'help', at: AT,
     text: 'Windows says “Windows protected your PC” when I run the installer. Is it safe?' },

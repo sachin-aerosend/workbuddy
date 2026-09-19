@@ -25,6 +25,7 @@ const DEFAULTS = {
   typingBuddy: true,           // tiny keyboard when you type
   sleepAfterIdleMinutes: 4,    // naps when you step away
   hideInFullscreen: true,
+  hideFromScreenShare: true,   // invisible in screen shares and recordings (you still see it)
   startWithWindows: true,
   bridgePort: 47821,
 };
