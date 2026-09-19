@@ -86,6 +86,36 @@
     setTimeout(() => { nudge.classList.remove('gone'); setSprite(nudgeCat, 'idle'); }, 2600);
   });
 
+  // ---------- reminder card: a real countdown that rings at zero ----------
+  const remindStage = document.getElementById('remind-stage');
+  if (remindStage) {
+    const pill = document.getElementById('remind-pill'), clock = document.getElementById('remind-clock');
+    const remindCat = document.getElementById('remind-cat');
+    const START = 10;
+    let left = START, ringing = false, timer = null;
+    const fmt = s => `0:${String(s).padStart(2, '0')}`;
+    const tickOnce = () => {
+      if (ringing) return;
+      left--;
+      if (left > 0) { pill.textContent = fmt(left); pill.classList.toggle('urgent', left <= 3); return; }
+      ringing = true;
+      clock.classList.add('ringing');
+      pill.textContent = 'time’s up! ⏰'; pill.className = 'pill ring';
+      setSprite(remindCat, 'surprised');
+      setTimeout(() => setSprite(remindCat, 'happy'), 1400);
+      setTimeout(() => {
+        ringing = false; left = START;
+        clock.classList.remove('ringing'); pill.className = 'pill'; pill.textContent = fmt(left);
+        setSprite(remindCat, 'idle');
+      }, 3200);
+    };
+    pill.textContent = fmt(left);
+    if (!reduceMotion) new IntersectionObserver(([e]) => {
+      clearInterval(timer);
+      if (e.isIntersecting) timer = setInterval(tickOnce, 1000);
+    }).observe(remindStage);
+  }
+
   // ============================================================
   // Hero scene: a tiny version of the desktop app's cat brain.
   // Behaviours are generators that yield once per frame, so they can be interrupted.

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WorkBuddy — a tiny cat that keeps you off Reels</title>
-  <meta name="description" content="WorkBuddy is a pixel cat that lives on your Windows taskbar. It naps in the corners, types along with you, and swats away Reels and Shorts before you get sucked in.">
+  <meta name="description" content="WorkBuddy is a free pixel cat for your Windows taskbar. It swats away Reels and Shorts, nudges you about forgotten tabs, sets cute reminders with a tiny alarm clock, and types along with you.">
   <meta property="og:title" content="WorkBuddy — a tiny cat that keeps you off Reels">
   <meta property="og:description" content="A pixel cat for your taskbar that closes time-wasting tabs, nudges you about forgotten ones, and keeps you company while you work.">
   <meta property="og:image" content="https://www.workbuddycat.online/assets/og.png">
@@ -104,6 +104,7 @@
     <ul>
       <li><b>Closes</b> Reels, Shorts &amp; more</li>
       <li><b>Nudges</b> you about forgotten tabs</li>
+      <li><b>Reminds</b> you with a tiny alarm clock</li>
       <li><b>Invisible</b> on screen share</li>
       <li><b>Never</b> records what you type</li>
     </ul>
@@ -144,6 +145,15 @@
         <p class="try">Go on, type something ⌨</p>
       </article>
 
+      <article class="card card-feature tone-peach card-remind">
+        <div class="stage stage-remind" id="remind-stage">
+          <div class="remind-float"><i class="clock" id="remind-clock"></i><span class="pill" id="remind-pill">0:10</span></div>
+          <div class="sprite big" id="remind-cat" data-anim="idle"></div>
+        </div>
+        <h3>Reminders with a tiny alarm clock</h3>
+        <p>Right-click the cat, type “call Priya back”, tap <b>10 min</b>. A little clock floats over her head counting down, and when it rings she jumps and shows your note, with a Windows notification too.</p>
+      </article>
+
       <article class="card card-feature tone-lav">
         <div class="stage"><div class="sprite big" data-anim="sleep"></div><div class="zzz"><i></i><i></i><i></i></div></div>
         <h3>Naps when you step away</h3>
@@ -160,6 +170,23 @@
         <div class="stage"><div class="sprite big" data-anim="loaf"></div><div class="shield">hidden<br>on calls</div></div>
         <h3>Invisible on screen share</h3>
         <p>You see the cat. Your prospects on Zoom, Meet or Teams don't. Want to show it off? One click makes it visible on calls too. It also steps aside for full-screen videos and slides.</p>
+      </article>
+
+      <article class="card card-feature tone-sky">
+        <div class="stage stage-tabs">
+          <div class="mini-tabs"><span></span><span class="on"></span><span></span><span></span></div>
+          <div class="tab-walker"><div class="sprite big" data-anim="walk"></div></div>
+        </div>
+        <h3>Strolls along your tabs</h3>
+        <p>Every so often she hops up onto the window you're using and wanders along the tab bar, stops to look around, pounces on a tab, then drops back down to the taskbar.</p>
+      </article>
+
+      <article class="card card-feature tone-mint">
+        <div class="stage stage-drag">
+          <div class="dangler"><span class="hand" aria-hidden="true">✋</span><div class="sprite big" data-anim="dangle"></div></div>
+        </div>
+        <h3>Pick her up, drop her anywhere</h3>
+        <p>Grab the cat and she dangles by the scruff, kicking her little legs. Let go and she falls with real gravity, or flick your mouse and throw her across to your other monitor.</p>
       </article>
     </div>
   </section>
@@ -223,6 +250,9 @@
     <div class="qa">
       <details open><summary>Is it free?</summary><p>Yes. Download it, install it and keep it.</p></details>
       <details><summary>Which sites does it block?</summary><p>Instagram Reels, YouTube Shorts and Facebook Reels out of the box, with TikTok one switch away. You can add any site from the tray menu. The rest of Instagram and YouTube still work.</p></details>
+      <details><summary>How do I set a reminder?</summary><p>Right-click the cat and choose <b>Set a reminder…</b>. Type what it's for, then tap 5, 10, 15, 30 minutes or 1 hour, or type any number of minutes. There's also <b>Focus for 25 min</b> for a quick Pomodoro. A tiny alarm clock floats over the cat with the countdown; when it rings you get a bubble with <b>done</b> or <b>snooze 5 min</b>, plus a Windows notification. Reminders survive restarts, and you can cancel one from the same menu.</p></details>
+      <details><summary>What else is in the right-click menu?</summary><p>Set a reminder, a 25-minute focus timer, play with the ball, walk on my tabs, nap time, show or hide the cat on screen share, and hide the cat for an hour.</p></details>
+      <details><summary>Can I move the cat?</summary><p>Yes. Click and drag to pick her up (she dangles by the scruff) and let go anywhere: she falls and lands on the taskbar, or on top of the window below her. Click without dragging to pet her.</p></details>
       <details><summary>Will it get in my way?</summary><p>It sticks to the taskbar and screen corners, and everything except the cat itself is click-through. It hides for full-screen apps, and you can send it away for an hour from the tray.</p></details>
       <details><summary>Will people see it when I share my screen?</summary><p>Not unless you want them to. By default Windows keeps it out of screen shares and recordings, so only you see it. To show it off on a call, right-click the cat → <b>Show me on screen share</b> (or use the tray menu), and switch it back the same way.</p></details>
       <details><summary>Does it slow my computer down?</summary><p>Barely. It's a 32-pixel cat, and it sleeps (and saves power) when you do.</p></details>

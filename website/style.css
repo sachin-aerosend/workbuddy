@@ -328,6 +328,55 @@ main > section { padding: 0 clamp(16px, 4vw, 48px); max-width: 1180px; margin: 0
 .mini-bubble.gone { transform: translateX(-50%) scale(.6); opacity: 0; }
 .stage-bubble .sprite { --size: calc(32px * var(--px) * .95); }
 
+/* reminder card: clock + countdown floating over the cat's head */
+.tone-peach .stage { background: #ffe6d3; }
+.remind-float {
+  position: absolute; left: 50%; bottom: calc(12px + 32px * var(--px) * 1.25 - 14px); z-index: 2;
+  transform: translateX(-50%); display: flex; align-items: center; gap: 6px;
+  animation: floaty 2.4s ease-in-out infinite;
+}
+@keyframes floaty { 50% { transform: translate(-50%, -4px); } }
+.clock {
+  --c: calc(15px * var(--px) * .8);
+  display: block; width: var(--c); height: var(--c);
+  background: url(assets/sprites/clock.png) 0 0 / calc(var(--c) * 4) var(--c) no-repeat; image-rendering: pixelated;
+  animation: tick 1s steps(2) infinite;
+}
+@keyframes tick { to { background-position-x: calc(var(--c) * -2); } }
+.clock.ringing { animation: ring .18s steps(2) infinite; }
+@keyframes ring { from { background-position-x: calc(var(--c) * -2); } to { background-position-x: calc(var(--c) * -4); } }
+.pill {
+  font: 700 14px var(--font-pixel); background: var(--cream); border: 2.5px solid var(--line); border-radius: 999px;
+  padding: 1px 9px; box-shadow: 2px 2px 0 var(--line); white-space: nowrap; min-width: 44px; text-align: center;
+}
+.pill.urgent { color: #c2405f; }
+.pill.ring { background: var(--sun); animation: pillpop .3s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes pillpop { from { transform: scale(.6); } }
+
+/* tabs card: the cat strolls along a mini tab strip */
+.stage-tabs { place-items: start center; padding: 0; }
+.mini-tabs {
+  position: absolute; left: 0; right: 0; top: 0; height: 30px; display: flex; gap: 4px; align-items: flex-end;
+  padding: 0 10px; background: #efe6dc; border-bottom: 2.5px solid var(--line);
+}
+.mini-tabs span { flex: 0 1 70px; height: 20px; border: 2px solid var(--line); border-bottom: 0; border-radius: 7px 7px 0 0; background: #f7f0e8; }
+.mini-tabs span.on { background: #fff; }
+.tab-walker { position: absolute; top: 4px; left: 50%; z-index: 1; animation: stroll 9s linear infinite; }
+.tab-walker .sprite { --size: calc(32px * var(--px) * .9); }
+@keyframes stroll {
+  0% { transform: translateX(-110%) scaleX(1); }
+  46% { transform: translateX(10%) scaleX(1); }
+  50% { transform: translateX(10%) scaleX(-1); }
+  96% { transform: translateX(-110%) scaleX(-1); }
+  100% { transform: translateX(-110%) scaleX(1); }
+}
+
+/* drag card: dangling from the scruff, swinging */
+.stage-drag { place-items: start center; padding: 0; }
+.dangler { position: relative; margin-top: 10px; transform-origin: 50% 12px; animation: swing 1.8s ease-in-out infinite; }
+.dangler .hand { position: absolute; left: 50%; top: -4px; transform: translateX(-50%); font-size: 26px; z-index: 2; }
+@keyframes swing { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
+
 /* ---------- gallery ---------- */
 .moods {
   display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px;
