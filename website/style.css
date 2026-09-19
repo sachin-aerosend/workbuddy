@@ -514,6 +514,10 @@ main > section { padding: 0 clamp(16px, 4vw, 48px); max-width: 1180px; margin: 0
 .dl-cats { display: flex; justify-content: center; gap: 6px; }
 .download-card .fine { margin-top: 20px; }
 
+.android-card { background: linear-gradient(160deg, #fff 0%, var(--mint) 160%); }
+.android-intro { display: flex; gap: 16px; align-items: center; }
+.android-intro .sprite { flex: none; }
+@media (max-width: 560px) { .android-intro { flex-direction: column; align-items: flex-start; } }
 .ext-card { margin-top: 26px; padding: 30px clamp(20px, 4vw, 44px); }
 .ext-head { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
 .ext-head .eyebrow { margin-bottom: 6px; }

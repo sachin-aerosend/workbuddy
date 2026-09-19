@@ -37,6 +37,7 @@
   // ---------- download links ----------
   document.querySelectorAll('[data-download]').forEach(a => { a.href = DOWNLOAD_URL; });
   document.querySelectorAll('[data-extension]').forEach(a => { a.href = EXTENSION_URL; });
+  document.querySelectorAll('[data-android]').forEach(a => { a.href = `${RELEASES}/WorkBuddy-Android.apk`; });
 
   // ---------- gallery ----------
   const moods = document.getElementById('moods');
