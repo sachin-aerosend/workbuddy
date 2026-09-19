@@ -10,4 +10,6 @@ contextBridge.exposeInMainWorld('buddy', {
   answer: id => ipcRenderer.send('answer', id),
   log: msg => ipcRenderer.send('log', msg),
   beat: () => ipcRenderer.send('beat'),
+  probe: data => ipcRenderer.send('probe', data),
+  hover: on => ipcRenderer.send('hover', on),
 });

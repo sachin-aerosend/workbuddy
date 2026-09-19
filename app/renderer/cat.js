@@ -214,7 +214,24 @@ function overCat(x, y) {
   const dpr = window.devicePixelRatio || 1;
   return ctx.getImageData(Math.floor(x * dpr), Math.floor(y * dpr), 1, 1).data[3] > 0;
 }
-addEventListener('mousemove', e => { if (!dragging) document.body.classList.toggle('pointer', overCat(e.clientX, e.clientY)); });
+// Hover as the renderer sees it, in the same coordinates it draws in (so it can't disagree with what's
+// on screen). Main combines this with its own hit test to decide when the window is clickable.
+let hovering = false;
+function setHover(on) { if (on !== hovering) { hovering = on; window.buddy.hover(on); } }
+// (No mouseleave handler: switching click-through off fires a spurious mouseleave, which caused
+// flicker. Main ignores this hover signal whenever the cursor is outside the window anyway.)
+let lastProbe = 0;
+addEventListener('mousemove', e => {
+  const onCat = overCat(e.clientX, e.clientY);
+  const onBubble = !bubbleEl.hidden && bubbleEl.contains(document.elementFromPoint(e.clientX, e.clientY));
+  setHover(onCat || onBubble || dragging);
+  if (!dragging) document.body.classList.toggle('pointer', onCat);
+  // Diagnostics: report where the renderer sees the mouse, to compare with the main process's maths.
+  if (e.timeStamp - lastProbe > 900) {
+    lastProbe = e.timeStamp;
+    window.buddy.probe({ cx: Math.round(e.clientX), cy: Math.round(e.clientY), sx: e.screenX, sy: e.screenY, dpr: devicePixelRatio, iw: innerWidth, ih: innerHeight });
+  }
+});
 // Right-click the cat for its menu.
 canvas.addEventListener('contextmenu', e => {
   e.preventDefault();

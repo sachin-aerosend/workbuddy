@@ -1,7 +1,7 @@
 {
   "name": "workbuddy",
   "productName": "WorkBuddy",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "A pixel cat that lives on your taskbar and keeps you off Reels.",
   "main": "app/main.js",
   "scripts": {

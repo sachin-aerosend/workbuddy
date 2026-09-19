@@ -300,7 +300,7 @@ function loop() {
 // position (reliable across mixed-DPI monitors) against hit boxes the renderer reports.
 let hitboxes = { cat: null, bubble: null }, clickable = false;
 const inside = (p, r) => r && p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h;
-let hwnd = null, lastMissLog = 0;
+let hwnd = null, lastMissLog = 0, rendererMouse = null, rendererHover = false;
 function updateClickable(b) {
   // Prefer the physical-pixel measurement from Windows; fall back to Electron's DIP maths.
   hwnd = hwnd || win.getNativeWindowHandle();
@@ -310,11 +310,17 @@ function updateClickable(b) {
     const c = screen.getCursorScreenPoint(), wb = win.getBounds();
     log('probe physical', Math.round(p.x), Math.round(p.y), '| electron-dip', c.x - b.x, c.y - b.y, '| getBounds-vs-intended', JSON.stringify(wb), JSON.stringify(b));
   }
-  const want = brain.mode === 'held' || !!inside(p, hitboxes.bubble) || !!inside(p, hitboxes.cat);
+  // Clickable if either our maths or the renderer's own hover says the mouse is on the cat/bubble
+  // (the renderer's view is only trusted while the cursor is actually inside our window).
+  const mainHit = !!inside(p, hitboxes.bubble) || !!inside(p, hitboxes.cat);
+  const want = brain.mode === 'held' || mainHit || (rendererHover && p.inside);
   if (process.env.WB_PROBE && hitboxes.bubble && Date.now() % 1000 < 40) log('probe p', JSON.stringify(p), 'bubble', JSON.stringify(hitboxes.bubble), 'win', JSON.stringify(b));
   // Clicking anywhere else closes an open menu / form, like a normal popup.
   const k = brain.bubble?.kind;
-  if ((k === 'menu' || k === 'form') && !want && mouseButtonDown()) brain.closeBubble();
+  if ((k === 'menu' || k === 'form') && !want && mouseButtonDown()) {
+    log('closing menu on outside click', JSON.stringify({ p: { x: Math.round(p.x), y: Math.round(p.y), inside: p.inside }, bubble: hitboxes.bubble, rendererHover }));
+    brain.closeBubble();
+  }
   // Diagnostics: a click inside our window that we treated as click-through. Logged (throttled) with
   // the numbers needed to see why, in case hit-testing ever goes wrong again.
   if (!want && p.inside && (hitboxes.cat || hitboxes.bubble) && mouseButtonDown() && Date.now() - lastMissLog > 5000) {
@@ -402,10 +408,22 @@ app.whenReady().then(() => {
   bridge.on('status', c => { browserConnected = c; log('browser', c ? 'connected' : 'disconnected', `clients=${bridge.clients.size}`); refreshTray(); });
   log('start', app.getVersion());
 
-  ipcMain.on('hitboxes', (_e, h) => { hitboxes = h; });
+  ipcMain.on('hitboxes', (_e, h) => { hitboxes = h; if (process.env.WB_PROBE && h.bubble) log('hitboxes', JSON.stringify(h)); });
   ipcMain.on('pet', () => { log('pet'); brain.pet(); });
   ipcMain.on('menu', () => openCatMenu());
   ipcMain.on('beat', () => { lastBeat = Date.now(); });
+  ipcMain.on('hover', (_e, on) => {
+    if (on !== rendererHover && process.env.WB_PROBE) log('renderer hover', on);
+    rendererHover = !!on;
+  });
+  // Latest renderer-side mouse position (CSS px), compared against the main-side hit test.
+  ipcMain.on('probe', (_e, d) => {
+    rendererMouse = { ...d, at: Date.now() };
+    if (process.env.WB_PROBE) {
+      const p = cursorInWindow(hwnd || win.getNativeWindowHandle()), c = screen.getCursorScreenPoint(), wb = win.getBounds();
+      log('probe renderer', JSON.stringify(d), '| physical', p && `${Math.round(p.x)},${Math.round(p.y)}`, '| dip', `${c.x - wb.x},${c.y - wb.y}`, '| bounds', JSON.stringify(wb));
+    }
+  });
   // Opening WorkBuddy while it's already running brings the cat back to you.
   app.on('second-instance', () => { log('second launch: summoning cat'); summonCat('here I am! 🐾'); });
   timers.push(setInterval(watchdog, 2000));
@@ -450,6 +468,7 @@ app.whenReady().then(() => {
     brain.x = w.x + w.width - 260; brain.y = w.y + w.height;
     brain.interrupt(brain.sit(), 'life');
     const ui = process.env.WB_UI;
+    if (ui === 'menu-here') { brain.x = brain.displays()[0].workArea.x + 300; brain.y = brain.ground(brain.x); return setTimeout(openCatMenu, 800); }
     if (ui === 'clock' || ui === 'menu') addReminder('finish the proposal', 10);
     if (ui === 'menu') setTimeout(openCatMenu, 800);
     if (ui === 'form') brain.openForm();
