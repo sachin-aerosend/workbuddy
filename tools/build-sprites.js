@@ -215,6 +215,24 @@ function rollFrames() {
   return [settle(ball), settle(r1), settle(r2), settle(r3)];
 }
 
+// ---------- Alarm clock prop (15x15): 2 ticking frames, 2 ringing (shaking) frames ----------
+function clockFrames() {
+  const body = (minute) => {
+    let g = P.blank(15, 15);
+    g = P.ellipse(g, 4, 3, 1.6, 1.2, 'R');            // bells
+    g = P.ellipse(g, 10, 3, 1.6, 1.2, 'R');
+    g = P.plot(g, [[4, 13, 'R'], [10, 13, 'R']]);   // feet
+    g = P.ellipse(g, 7, 8, 4.6, 4.4, 'r');           // body
+    g = P.ellipse(g, 7, 8, 3.1, 2.9, 'c');           // face
+    g = P.plot(g, [[7, 6, 'k'], [7, 7, 'k'], [7, 8, 'k']]);         // hour hand
+    g = P.plot(g, minute ? [[8, 8, 'k'], [9, 8, 'k']] : [[8, 9, 'k'], [9, 10, 'k']]); // minute hand
+    g = P.plot(g, [[5, 5, 'w']]);                    // shine
+    return P.outline(g);
+  };
+  const ring = dx => P.plot(P.shift(body(1), dx, 0), [[0, 5, 'e'], [0, 8, 'e'], [14, 5, 'e'], [14, 8, 'e'], [1, 2, 'e'], [13, 2, 'e']]);
+  return [body(0), body(1), ring(-1), ring(1)];
+}
+
 // ---------- Props + effects ----------
 const BALL = P.outline(P.plot(P.ellipse(P.blank(9, 9), 4, 4, 3, 3, 'r'),
   [[3, 2, 'R'], [4, 3, 'R'], [5, 4, 'R'], [2, 4, 'R'], [3, 5, 'R'], [5, 2, 'c'], [6, 3, 'c']]));
@@ -288,13 +306,17 @@ for (const [name, a] of Object.entries(ANIMS)) {
 }
 P.writeGif(path.join(PREVIEW, 'typing.gif'), [0, 1, 0, 2, 1, 2, 0, 3, 0, 0].map(i => ANIMS.typing.frames[i]), 6);
 P.writeSheet(path.join(OUT, 'ball.png'), [BALL]);
+const CLOCK = clockFrames();
+P.writeSheet(path.join(OUT, 'clock.png'), CLOCK);
+manifest.clock = { w: 15, h: 15, frames: CLOCK.length };
+P.writeSheet(path.join(PREVIEW, 'clock-zoom.png'), CLOCK, 10, [236, 238, 244]);
 P.writeSheet(path.join(OUT, 'fx.png'), Object.values(FX).map(padFx));
 Object.keys(FX).forEach((k, i) => { manifest.fx[k] = i; });
 fs.writeFileSync(path.join(OUT, 'manifest.json'), JSON.stringify(manifest, null, 2));
 // Sheets are also embedded as data URIs: canvases drawn from them stay readable (file:// images
 // would "taint" the canvas and block the pixel hit-testing).
 const dataUri = f => `data:image/png;base64,${fs.readFileSync(path.join(OUT, f)).toString('base64')}`;
-const embedded = Object.fromEntries([...Object.keys(ANIMS), 'ball', 'fx'].map(n => [n, dataUri(`${n}.png`)]));
+const embedded = Object.fromEntries([...Object.keys(ANIMS), 'ball', 'fx', 'clock'].map(n => [n, dataUri(`${n}.png`)]));
 fs.writeFileSync(path.join(OUT, 'manifest.js'), `window.SPRITES = ${JSON.stringify(manifest)};\nwindow.SPRITE_DATA = ${JSON.stringify(embedded)};\n`);
 
 // Contact sheet for review: one row per animation, 4x scale.

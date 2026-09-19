@@ -2,13 +2,14 @@
 // swats away time-wasting tabs and nudges you to close stale ones.
 const path = require('path');
 const fs = require('fs');
-const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, screen, powerMonitor, shell } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, screen, powerMonitor, shell, Notification } = require('electron');
 const settings = require('./settings');
+const reminders = require('./reminders');
 const { Brain } = require('./brain');
 const { Bridge } = require('./bridge');
 const { fullscreenMonitor, foregroundWindow, mouseButtonDown } = require('./win32');
 
-const WIN_W = 280, WIN_H = 230; // cat window (DIP): room for the cat, ball and a bubble above
+const WIN_W = 300, WIN_H = 340; // cat window (DIP): room for the cat, ball and a bubble/menu above
 const ICON = path.join(__dirname, '..', 'assets', 'icon.ico');
 const EXTENSION_DIR = app.isPackaged ? path.join(process.resourcesPath, 'extension') : path.join(__dirname, '..', 'extension');
 
@@ -26,7 +27,7 @@ function log(...parts) {
 
 let win, tray, brain, bridge;
 let pausedUntil = 0, hidden = false, fullscreenHide = false, browserConnected = false;
-let lastBounds = '', lastState = '';
+let lastBounds = '', lastState = '', focusable = false;
 
 function displays() {
   return screen.getAllDisplays().sort((a, b) => a.bounds.x - b.bounds.x);
@@ -82,8 +83,65 @@ const catVisible = () => !hidden && !fullscreenHide && Date.now() > pausedUntil;
 
 function onCloseTab(tabId, reason) { log('-> closeTab', tabId, reason); bridge.broadcast({ type: 'closeTab', tabId, reason }); }
 
+// ---------- right-click menu + reminders ----------
+const fmtLeft = ms => {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return s >= 3600 ? `${Math.floor(s / 3600)}h${String(Math.floor(s / 60) % 60).padStart(2, '0')}` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
+function openCatMenu() {
+  const items = [
+    { id: 'remind', label: '⏰ Set a reminder…' },
+    { id: 'focus', label: '🍅 Focus for 25 min' },
+    ...reminders.all().map(r => ({ id: `cancel:${r.id}`, label: `✕ ${fmtLeft(r.due - Date.now())} · ${r.text.slice(0, 22)}`, kind: 'cancel' })),
+    { id: 'ball', label: '🧶 Play with the ball' },
+    { id: 'patrol', label: '🐾 Walk on my tabs' },
+    { id: 'nap', label: '😴 Nap time' },
+    { id: 'away', label: '🙈 Hide for 1 hour' },
+  ];
+  brain.openMenu(items);
+}
+function addReminder(text, minutes) {
+  const r = reminders.add(text, minutes);
+  log('reminder set', r.id, `${minutes}min`);
+  return r;
+}
+function checkReminders() {
+  for (const r of reminders.takeDue()) {
+    log('reminder due', r.id);
+    if (Date.now() < pausedUntil) pausedUntil = 0; // bring the cat back for it
+    brain.alarm(r);
+    if (Notification.isSupported()) {
+      const n = new Notification({ title: 'WorkBuddy ⏰', body: r.text, icon: ICON, silent: false });
+      n.on('click', () => { hidden = false; });
+      n.show();
+    }
+  }
+  const next = reminders.next();
+  brain.setCountdown(next ? Math.max(0, (next.due - Date.now()) / 1000) : null);
+}
+function onMenuChoice(id) {
+  if (id === 'remind') return brain.openForm();
+  if (id === 'focus') { addReminder('Focus session done! Stretch and take 5 🐾', 25); return brain.say('focus mode! 25:00 🍅', 2.5); }
+  if (id.startsWith('cancel:')) { reminders.remove(id.slice(7)); return brain.say('okay, cancelled', 2); }
+  if (id === 'ball') return brain.interrupt(brain.grounded(brain.ballPlay()), 'life');
+  if (id === 'patrol') return brain.interrupt(brain.grounded(brain.tabPatrol()), 'life');
+  if (id === 'nap') return brain.interrupt(brain.nap(60), 'life');
+  if (id === 'away') { pausedUntil = Date.now() + 3600e3; refreshTray(); }
+}
+
 function onBubbleAnswer(b, answer) {
-  log('bubble answer', b.kind, answer, b.tabId ?? '', `clients=${bridge.clients.size}`);
+  log('bubble answer', b.kind, typeof answer === 'object' ? 'form' : answer, b.tabId ?? '', `clients=${bridge.clients.size}`);
+  if (b.kind === 'menu' && typeof answer === 'string' && answer !== 'close') return onMenuChoice(answer);
+  if (b.kind === 'form' && answer && typeof answer === 'object') {
+    const minutes = Math.round(Number(answer.minutes));
+    if (!(minutes >= 1 && minutes <= 1440)) return brain.say('pick 1 min to 24 h ⏰', 2.5);
+    addReminder(answer.text, minutes);
+    return brain.say(`got it! I’ll remind you in ${minutes >= 60 ? `${+(minutes / 60).toFixed(1)} h` : `${minutes} min`} ⏰`, 2.8);
+  }
+  if (b.kind === 'alarm') {
+    if (answer === 'snooze') { addReminder(b.remText, 5); brain.say('5 more minutes… 😴', 2); }
+    return;
+  }
   if (b.kind === 'undo' && answer === 'undo') bridge.broadcast({ type: 'undo', sessionId: b.sessionId });
   if (b.kind !== 'ask') return;
   if (answer === 'yes') bridge.broadcast({ type: 'closeTab', tabId: b.tabId, reason: 'nudge' });
@@ -145,7 +203,17 @@ function loop() {
     brain.holdAt(c.x, c.y);
     if (mouseButtonDown() === false) brain.release();
   }
+  checkReminders();
   brain.tick(dt, powerMonitor.getSystemIdleTime());
+
+  // The reminder form needs keyboard focus; everything else stays non-focusable so it never steals it.
+  const wantFocus = brain.bubble?.kind === 'form';
+  if (wantFocus !== focusable) {
+    focusable = wantFocus;
+    win.setFocusable(wantFocus);
+    win.setSkipTaskbar(true); // becoming focusable makes Windows add a taskbar button; keep it hidden
+    if (wantFocus) { win.focus(); win.webContents.focus(); }
+  }
 
   const visible = catVisible();
   if (visible !== win.isVisible()) visible ? win.showInactive() : win.hide();
@@ -154,7 +222,8 @@ function loop() {
   // Near the top of a screen there's no room for a bubble above the cat: put the cat at the top of
   // its window and the bubble underneath instead.
   const d = screen.getDisplayNearestPoint({ x: Math.round(brain.x), y: Math.round(brain.y - 10) }).bounds;
-  const below = !!brain.bubble && brain.y - catHeight() - 120 < d.y;
+  const bubbleH = { menu: 60 + 27 * (brain.bubble?.buttons?.length || 0), form: 190 }[brain.bubble?.kind] || 120;
+  const below = !!brain.bubble && brain.y - catHeight() - bubbleH < d.y;
   const catBottom = below ? Math.ceil(catHeight()) + 4 : WIN_H;
   const b = { x: Math.round(brain.x - WIN_W / 2), y: Math.round(brain.y - catBottom), width: WIN_W, height: WIN_H };
   const key = `${b.x},${b.y}`;
@@ -175,6 +244,9 @@ function updateClickable(b) {
   const p = { x: c.x - b.x, y: c.y - b.y };
   const want = brain.mode === 'held' || !!inside(p, hitboxes.bubble) || !!inside(p, hitboxes.cat);
   if (process.env.WB_PROBE && hitboxes.bubble && Date.now() % 1000 < 40) log('probe p', JSON.stringify(p), 'bubble', JSON.stringify(hitboxes.bubble), 'win', JSON.stringify(b));
+  // Clicking anywhere else closes an open menu / form, like a normal popup.
+  const k = brain.bubble?.kind;
+  if ((k === 'menu' || k === 'form') && !want && mouseButtonDown()) brain.closeBubble();
   if (want !== clickable) {
     clickable = want; win.setIgnoreMouseEvents(!want, { forward: true });
     if (process.env.WB_PROBE) log('clickable', want);
@@ -204,6 +276,7 @@ function refreshTray() {
     paused
       ? { label: 'Resume cat now', click: () => { pausedUntil = 0; refreshTray(); } }
       : { label: 'Send cat away for 1 hour', click: () => { pausedUntil = Date.now() + 3600e3; refreshTray(); setTimeout(refreshTray, 3600e3 + 1000); } },
+    { label: 'Set a reminder…', click: () => { hidden = false; pausedUntil = 0; brain.openForm(); } },
     { label: 'Play with the ball', click: () => brain.interrupt(brain.grounded(brain.ballPlay()), 'life') },
     { label: 'Walk on my tabs', click: () => brain.interrupt(brain.grounded(brain.tabPatrol()), 'life') },
     { label: 'Nap time', click: () => brain.interrupt(brain.nap(60), 'life') },
@@ -244,6 +317,7 @@ app.whenReady().then(() => {
   createWindow();
   brain = new Brain({ displays, settings: settings.get, onCloseTab, onBubbleAnswer, perch: () => perchCache });
   setInterval(updatePerch, 500);
+  brain.onError = err => log('behaviour crashed:', String(err && err.stack || err).split('\n').slice(0, 3).join(' | '));
 
   bridge = new Bridge(settings.get().bridgePort);
   bridge.on('message', onBridgeMessage);
@@ -252,6 +326,7 @@ app.whenReady().then(() => {
 
   ipcMain.on('hitboxes', (_e, h) => { hitboxes = h; });
   ipcMain.on('pet', () => { log('pet'); brain.pet(); });
+  ipcMain.on('menu', () => openCatMenu());
   ipcMain.on('log', (_e, msg) => log('renderer:', String(msg).slice(0, 200)));
   ipcMain.on('drag-start', () => {
     const c = screen.getCursorScreenPoint();
@@ -284,6 +359,18 @@ app.whenReady().then(() => {
     const p = screen.dipToScreenPoint({ x: Math.round(wb.x + r.x), y: Math.round(wb.y + r.y) });
     log('probe yes-button', p.x, p.y);
   }, 1000);
+
+  // Dev: WB_UI=menu|form|clock|alarm puts the cat on the primary screen and opens that UI (for screenshots).
+  if (process.env.WB_UI) setTimeout(() => {
+    const w = screen.getPrimaryDisplay().workArea;
+    brain.x = w.x + w.width - 260; brain.y = w.y + w.height;
+    brain.interrupt(brain.sit(), 'life');
+    const ui = process.env.WB_UI;
+    if (ui === 'clock' || ui === 'menu') addReminder('finish the proposal', 10);
+    if (ui === 'menu') setTimeout(openCatMenu, 800);
+    if (ui === 'form') brain.openForm();
+    if (ui === 'alarm') brain.alarm({ id: 'demo', text: 'finish the proposal' });
+  }, 1500);
 
   // Dev: WB_DEMO=<behaviour> starts a specific behaviour, e.g. WB_DEMO=visitMonitor.
   if (process.env.WB_DEMO && typeof brain[process.env.WB_DEMO] === 'function') {

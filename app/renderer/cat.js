@@ -26,6 +26,7 @@ for (const [name, im] of Object.entries(sheets)) {
   });
 }
 const ballImg = img('ball');
+const clockImg = img('clock');
 const fxImg = img('fx');
 const NO_FLIP = new Set(['typing', 'box', 'dracula']);
 
@@ -88,6 +89,7 @@ function draw(now) {
   ctx.restore();
   catRect = { x: x / dpr, y: y / dpr, w: fw / dpr, h: fh / dpr };
   reportHitboxes(i, px / dpr);
+  if (state.clock) drawClock(state.clock, now, cx, x, y, fw, fh, bottom, dpr);
 
   // effects
   const headY = y + 6 * px;
@@ -106,6 +108,31 @@ function draw(now) {
 }
 requestAnimationFrame(draw);
 
+// ---------- reminder clock: floats over her head with a countdown, or sits on the floor while she plays ----------
+const fmtRemain = s => (s >= 3600 ? `${Math.floor(s / 3600)}h${String(Math.floor(s / 60) % 60).padStart(2, '0')}` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
+function drawClock(c, now, cx, x, y, fw, fh, bottom, dpr) {
+  const s = M.clock.w * Math.max(1, Math.round(px * 0.7));
+  const f = c.ringing ? 2 + (Math.floor(now / 90) % 2) : Math.floor(now / 500) % 2;
+  const bob = c.ringing ? 0 : Math.round(Math.sin(now / 420) * 1.5 * dpr);
+  let clockX, clockY, pillPos;
+  if (c.ground != null) { clockX = cx + c.ground * dpr - s / 2; clockY = bottom - s; pillPos = 'above'; }
+  else if (state.bubble && !c.ringing) { clockX = x - s * 0.55; clockY = y + fh * 0.3 + bob; pillPos = 'below'; }
+  else { clockX = cx - s / 2 - (c.remain != null ? 18 * dpr : 0); clockY = y + 3 * px - s + bob; pillPos = 'right'; }
+  ctx.drawImage(clockImg, f * M.clock.w, 0, M.clock.w, M.clock.h, Math.round(clockX), Math.round(clockY), s, s);
+  if (c.remain == null) return;
+  const label = fmtRemain(c.remain);
+  ctx.font = `700 ${Math.round(11.5 * dpr)}px "Segoe UI", sans-serif`;
+  const tw = ctx.measureText(label).width, ph = Math.round(17 * dpr), pw = Math.round(tw + 12 * dpr);
+  let pxl = clockX + s + 3 * dpr, pyl = clockY + (s - ph) / 2;
+  if (pillPos === 'above') { pxl = clockX + s / 2 - pw / 2; pyl = clockY - ph - 3 * dpr; }
+  if (pillPos === 'below') { pxl = clockX + s / 2 - pw / 2; pyl = clockY + s + 2 * dpr; }
+  ctx.fillStyle = '#fffaf2'; ctx.strokeStyle = '#212121'; ctx.lineWidth = 2 * dpr;
+  ctx.beginPath(); ctx.roundRect(Math.round(pxl), Math.round(pyl), pw, ph, ph / 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = c.remain <= 60 ? '#c2405f' : '#212121';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, Math.round(pxl + 6 * dpr), Math.round(pyl + ph / 2 + dpr * 0.5));
+}
+
 // ---------- bubble ----------
 let bubbleKey = '';
 function renderBubble(s) {
@@ -114,14 +141,16 @@ function renderBubble(s) {
   if (key === bubbleKey) return;
   bubbleKey = key;
   if (!b) { bubbleEl.hidden = true; return; }
-  bubbleEl.className = (b.kind === 'ask' ? 'thought' : 'speech') + (s.below ? ' below' : '');
-  bubbleEl.querySelector('.text').textContent = b.text;
+  bubbleEl.className = (b.kind === 'ask' ? 'thought' : 'speech') + (s.below ? ' below' : '') + ` kind-${b.kind}`;
+  bubbleEl.querySelector('.text').textContent = b.text || '';
   bubbleEl.querySelector('.sub').textContent = b.sub || '';
   const btns = bubbleEl.querySelector('.buttons');
-  btns.replaceChildren(...(b.buttons || []).map((btn, n) => {
+  if (b.kind === 'form') btns.replaceChildren(reminderForm(b));
+  else btns.replaceChildren(...(b.buttons || []).map((btn, n) => {
     const el = document.createElement('button');
     el.textContent = btn.label;
-    if (n === 0) el.className = 'primary';
+    if (b.kind === 'menu') el.className = btn.kind === 'cancel' ? 'item cancel' : 'item';
+    else if (n === 0) el.className = 'primary';
     el.addEventListener('pointerdown', () => window.buddy.log(`pointerdown ${btn.id}`));
     el.addEventListener('click', () => { window.buddy.log(`click ${btn.id}`); window.buddy.answer(btn.id); });
     return el;
@@ -137,6 +166,24 @@ function renderBubble(s) {
   bubbleEl.style.left = `${Math.round(left)}px`;
   bubbleEl.style.setProperty('--point', `${Math.round(mid - left)}px`);
 }
+
+// "remind me to…" + quick time chips or a custom number of minutes.
+function reminderForm(b) {
+  const form = document.createElement('form');
+  form.className = 'remind';
+  form.innerHTML = `
+    <input class="what" maxlength="120" placeholder="finish the proposal" aria-label="What should I remind you about?">
+    <div class="chips">${b.presets.map(m => `<button type="button" class="chip" data-min="${m}">${m >= 60 ? `${m / 60} h` : `${m} min`}</button>`).join('')}</div>
+    <div class="custom"><span>or in</span><input class="mins" type="number" min="1" max="1440" placeholder="20" aria-label="Minutes"><span>min</span>
+      <button type="submit" class="primary">set ⏰</button></div>`;
+  const what = form.querySelector('.what'), mins = form.querySelector('.mins');
+  const send = m => window.buddy.answer({ text: what.value, minutes: m });
+  form.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => send(+ch.dataset.min)));
+  form.addEventListener('submit', e => { e.preventDefault(); if (mins.value) send(+mins.value); else mins.focus(); });
+  setTimeout(() => what.focus(), 60);
+  return form;
+}
+addEventListener('keydown', e => { if (e.key === 'Escape' && state?.bubble && ['menu', 'form'].includes(state.bubble.kind)) window.buddy.answer('close'); });
 
 // ---------- click-through except on the cat and bubble ----------
 // The main process polls the real cursor and makes the window clickable only inside these boxes
@@ -164,6 +211,11 @@ function overCat(x, y) {
   return ctx.getImageData(Math.floor(x * dpr), Math.floor(y * dpr), 1, 1).data[3] > 0;
 }
 addEventListener('mousemove', e => { if (!dragging) document.body.classList.toggle('pointer', overCat(e.clientX, e.clientY)); });
+// Right-click the cat for its menu.
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  if (overCat(e.clientX, e.clientY)) window.buddy.menu();
+});
 // Click = pet. Press and move = pick the cat up; let go = it falls and lands.
 let downAt = null, dragging = false;
 canvas.addEventListener('pointerdown', e => {

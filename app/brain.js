@@ -30,8 +30,12 @@ class Brain {
     this.lastNudgeAt = -1e9;
     this.pendingNudge = null;
     this.userIdleSecs = 0;
+    this.countdown = null;             // seconds until the next reminder (set by main), or null
+    this.clockGround = null;           // { dx } while the cat is playing with the clock on the floor
+    this.alarmQueue = [];              // reminders that are due
+    this.activeAlarm = null;           // the one currently ringing
     this.task = this.life();
-    this.mode = 'life';                // life | typing | mission | nudge | pet | away
+    this.mode = 'life';                // life | typing | mission | nudge | pet | away | menu | alarm | held
   }
 
   // ---------- plumbing ----------
@@ -41,7 +45,7 @@ class Brain {
   }
   addFx(type, extra = {}) { this.fx.push({ type, t0: this.t, ...extra }); }
   // Any interruption ends ball play (a leftover ball would block typing mode and nudges forever).
-  interrupt(gen, mode) { this.task = gen; this.mode = mode; this.ball = null; this.tilt = 0; }
+  interrupt(gen, mode) { this.task = gen; this.mode = mode; this.ball = null; this.tilt = 0; this.clockGround = null; }
   speedMul() { return this.settings().speed || 1; }
 
   displayAt(x) {
@@ -76,7 +80,14 @@ class Brain {
       this.interrupt(this.nudge(n), 'nudge');
     }
 
-    const r = this.task.next();
+    let r;
+    try { r = this.task.next(); }
+    catch (err) { // never let one broken behaviour freeze the cat: log it and go back to normal life
+      console.error('[workbuddy] behaviour crashed:', err);
+      this.onError?.(err);
+      r = { done: true };
+      this.bubble = null; this.clockGround = null; this.ball = null;
+    }
     if (r.done) { this.task = this.life(); this.mode = 'life'; }
   }
 
@@ -86,6 +97,9 @@ class Brain {
       fx: this.fx.map(f => ({ type: f.type, age: this.t - f.t0, dx: f.dx || 0 })),
       ball: this.ball && { dx: this.ball.x - this.x, dy: this.ball.y - this.y, spin: this.ball.spin },
       tilt: this.mode === 'held' ? Math.round((this.tilt || 0) * 100) / 100 : 0,
+      clock: this.activeAlarm ? { ringing: true }
+        : this.countdown != null ? { remain: Math.ceil(this.countdown), ground: this.clockGround ? this.clockGround.dx : null }
+        : null,
       bubble: this.bubble,
     };
   }
@@ -105,7 +119,7 @@ class Brain {
   }
 
   pet() {
-    if (this.mode === 'mission' || this.mode === 'nudge') return;
+    if (this.mode === 'mission' || this.mode === 'nudge' || this.mode === 'menu' || this.mode === 'alarm') return;
     this.interrupt(this.petted(), 'pet');
   }
 
@@ -117,6 +131,76 @@ class Brain {
   }
 
   queueNudge(n) { this.pendingNudge = n; }
+
+  // ---------- right-click menu, reminder form, alarms ----------
+  setCountdown(secs) { this.countdown = secs; if (secs == null) this.clockGround = null; }
+  openMenu(items) {
+    if (this.mode === 'mission' || this.mode === 'held') return;
+    this.interrupt(this.waitOnBubble({ kind: 'menu', buttons: items }, 15), 'menu');
+  }
+  openForm() {
+    this.interrupt(this.waitOnBubble({
+      kind: 'form', text: 'remind me to…',
+      presets: [5, 10, 15, 30, 60],
+    }, 120), 'menu');
+  }
+  closeBubble() { if (this.bubble && (this.bubble.kind === 'menu' || this.bubble.kind === 'form')) this.answerBubble('close'); }
+  // Sit attentively while a menu/form is open; give up quietly after `secs`.
+  *waitOnBubble(b, secs) {
+    yield* this.dropDown();
+    this.bubble = b;
+    this.setAnim('idle');
+    const end = this.t + secs;
+    while (this.bubble === b && this.t < end) yield;
+    if (this.bubble === b) this.bubble = null;
+  }
+  alarm(rem) {
+    this.alarmQueue.push(rem);
+    if (this.mode !== 'alarm' && this.mode !== 'held') this.interrupt(this.ringing(), 'alarm');
+  }
+  *ringing() {
+    while (this.activeAlarm || this.alarmQueue.length) {
+      if (!this.activeAlarm) this.activeAlarm = this.alarmQueue.shift();
+      const rem = this.activeAlarm;
+      this.clockGround = null;
+      this.addFx('bang', { life: 1 });
+      yield* this.play('surprised', 0.6);
+      this.bubbleAnswer = null;
+      const b = {
+        kind: 'alarm', rid: rem.id, remText: rem.text, text: `⏰ ${rem.text}`, sub: 'time’s up!',
+        buttons: [{ id: 'done', label: 'done ✓' }, { id: 'snooze', label: 'snooze 5 min' }],
+      };
+      this.bubble = b;
+      let nextRing = this.t + 4, flip = false;
+      while (!this.bubbleAnswer) {
+        if (this.bubble !== b) this.bubble = b;          // keep it up until answered
+        if (this.t > nextRing) { this.addFx('bang', { life: 0.9 }); this.setAnim((flip = !flip) ? 'surprised' : 'idle'); nextRing = this.t + 4; }
+        yield;
+      }
+      this.activeAlarm = null;
+      yield* this.play(this.bubbleAnswer.answer === 'done' ? 'happy' : 'yawn', 1);
+    }
+  }
+  // With a timer running, now and then the clock hops down and gets batted around.
+  *clockPlay() {
+    if (this.countdown == null) return;
+    const side = pick([-1, 1]);
+    this.facing = side;
+    const clock = this.clockGround = { dx: side * 26 };
+    const over = () => this.clockGround !== clock; // reminder cancelled / went off mid-game
+    yield* this.play('surprised', 0.4);
+    for (let i = 0; i < 3 && !over(); i++) {
+      this.setAnim('pounce', 0);
+      for (const f of [0, 1, 2, 3]) { this.frame = f; yield* this.wait(0.13); }
+      if (over()) break;
+      this.setAnim('pounce', 5);
+      clock.dx = side * (26 + 10 * (i % 2 ? -1 : 1));
+      yield* this.wait(0.35);
+      yield* this.play('idle', 0.8);
+    }
+    if (!over()) this.clockGround = null;
+    yield* this.play('happy', 0.8);
+  }
 
   // ---------- drag & drop ----------
   // Picked up: the cat hangs from the cursor by its scruff (hx,hy = cursor in screen DIP).
@@ -265,6 +349,7 @@ class Brain {
   *life() {
     while (true) {
       yield* this.dropDown(); // e.g. after typing or a mission up on a window
+      if (this.activeAlarm || this.alarmQueue.length) { this.mode = 'alarm'; yield* this.ringing(); this.mode = 'life'; continue; }
       const hour = new Date().getHours();
       const october = new Date().getMonth() === 9;
       const ds = this.displays();
@@ -273,6 +358,7 @@ class Brain {
         [25, () => this.wander()],
         [ds.length > 1 ? 8 : 0, () => this.visitMonitor()],
         [10, () => this.tabPatrol()],
+        [this.countdown != null ? 12 : 0, () => this.clockPlay()],
         [8, () => this.groom()],
         [5, () => this.play('yawn')],
         [5, () => this.play('stretch', animSecs('stretch') * 2)],

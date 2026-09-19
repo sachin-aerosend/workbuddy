@@ -58,6 +58,36 @@ body.grabbing #stage { cursor: grabbing; }
 }
 #bubble.speech.below::after { bottom: auto; top: -8px; transform: rotate(225deg); }
 
+#bubble .text:empty { display: none; }
+
+/* right-click menu */
+#bubble.kind-menu { padding: 6px; min-width: 190px; text-align: left; }
+#bubble.kind-menu .buttons { flex-direction: column; gap: 2px; margin: 0; }
+#bubble .item {
+  box-shadow: none; border: 0; border-radius: 10px; text-align: left; padding: 4px 10px;
+  font: 650 12.5px "Segoe UI", system-ui, sans-serif; background: transparent; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+#bubble .item:hover { background: var(--fur); transform: none; }
+#bubble .item.cancel { color: #a8364a; }
+#bubble .item.cancel:hover { background: #ffe0da; }
+
+/* reminder form */
+#bubble.kind-form { width: 230px; max-width: 230px; }
+#bubble .remind { display: grid; gap: 7px; width: 100%; }
+#bubble .remind input {
+  font: 600 12.5px "Segoe UI", system-ui, sans-serif; color: var(--ink); background: #fff;
+  border: 2px solid var(--ink); border-radius: 10px; padding: 4px 8px; min-width: 0;
+}
+#bubble .remind input:focus { outline: none; box-shadow: 2px 2px 0 var(--blush); }
+#bubble .remind .chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+#bubble .remind .chip { padding: 1px 8px; }
+#bubble .remind .custom { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); }
+#bubble .remind .mins { width: 52px; text-align: center; }
+#bubble .remind .custom .primary { margin-left: auto; }
+#bubble.kind-form .buttons { margin-top: 6px; }
+#bubble.kind-alarm { border-color: #c2405f; box-shadow: 0 3px 0 rgba(194, 64, 95, .35); }
+
 @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 #bubble { transform-origin: var(--point) 100%; }
 #bubble.below { transform-origin: var(--point) 0; }
