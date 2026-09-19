@@ -8,7 +8,9 @@
     "start": "electron .",
     "sprites": "node tools/build-sprites.js && node tools/build-icon.js",
     "test": "node tools/test-brain.js",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win",
+    "blog": "node tools/build-blog.js",
+    "indexnow": "node tools/indexnow.js"
   },
   "author": "Sachin Sahani",
   "license": "UNLICENSED",
